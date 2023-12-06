@@ -1,11 +1,11 @@
 ###################
 #
-# Computing genetic ogan size values
+# Computing genetic organ size values
 # 2023-05-04 Kevin
 #
 ###################
 
-organs<-read.table("U_Shaped_Data.csv",h=T,sep = ",")
+organs<-read.table("phenotypes/rawfiles/U_Shaped_Data.csv",h=T,sep = ",")
 # fixing some misreading of labels
 # 4749 is 4779 
 # 6421 is 6424 
@@ -19,7 +19,7 @@ organs[which(organs$Genotype == 7525),11:13]<-organs[which(organs$Genotype == 75
 organs<-organs[-which(organs$Genotype == 7527),]
 organs$Genotype[which(organs$Genotype==6947)]<-6945
 
-metadt<-read.table("data_mani_fleur2022_cleaned_KSedited_2023-05-04.csv",h=T,sep=";",na.strings = c("NA",""),dec = ",")
+metadt<-read.table("phenotypes/rawfiles/data_mani_fleur2022_cleaned_KSedited_2023-05-04.csv",h=T,sep=";",na.strings = c("NA",""),dec = ",")
 
 # make dates
 metadt$date.semis<-as.Date(metadt$date.semis,format = "%d/%m/%Y")
@@ -59,12 +59,11 @@ summary(lm(Petal_Area ~ stem + mean_rank, data = organs))
 # Simplify organs
 organs<-organs[,c(1,14,22,23,2:13,27:33)]
 
-# Computing genotype's values without confounding effects (essentially the petal rank) 
+# Computing genotype's values without confounding effects (essentially the flower rank) 
 organs$stem<-as.factor(organs$stem)
 organs$table<-as.factor(organs$table)
 organs_corrected<-organs[,c(1:4)]
-#  
-i<-5
+  
 for (i in 5:16) {
   donnees<-na.omit(organs[,c(1:4,i)])
   rownames(donnees)<-donnees$Genotype
@@ -92,4 +91,4 @@ cor.test(organs_corrected$Seed,organs_corrected$flowering_time)
 plot(organs_corrected$Seed ~ organs_corrected$Petal_Area)
 cor.test(organs_corrected$Seed,organs_corrected$Petal_Area)
 
-write.table(x = organs_corrected,file = "U_Shaped_Data_corrected_2023-05-05.csv",quote = F,row.names = F,col.names = T)
+write.table(x = organs_corrected,file = "phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",quote = F,row.names = F,col.names = T)
