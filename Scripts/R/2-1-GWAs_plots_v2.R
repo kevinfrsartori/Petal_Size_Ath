@@ -32,12 +32,6 @@ for (i in 1:length(traits)) {
 # 2 - Plot Hits with all traits GWAs
 
 # 2.1 prepare files
-gwas
-snp1 snp2 snp3 
-13 13 13
-
-
-
 
 hitsdir<-grep(pattern="txt",grep(pattern = "Hits",x = list.files("Genetics/",full.names = T),value = T),value = T)
 for (i in 1:length(hitslist)) {if(i==1){hits<-read.table(hitsdir[i],sep = "_")}else{hits<-rbind(hits,read.table(hitsdir[i],sep = "_"))}}
@@ -46,34 +40,58 @@ hitsnames<-grep(pattern="gff",grep(pattern = "Hits",x = list.files("Genetics/",f
 hitsnames<-unlist(lapply(strsplit(hitsnames,split = "\\."),"[[",1))
 hitsnames<-paste0(unlist(lapply(strsplit(hitsnames,split = "_"),"[[",2)),"_",unlist(lapply(strsplit(hitsnames,split = "_"),"[[",3)))
 
+# 2.2 make list of gff files for each hit,
+# and list of list of association file for each trait in each hit 
 
-par(mfrow=c(1,3),oma=c(0,0,0,0))
-#first hit
-i<-1
-par(mar=c(5,5,2,0))
-gff<-read.table(hitsdir[i])
-gff$V9<-substr(unlist(lapply(strsplit(gff$V9,split = "\\;"),"[[",1)),8,12)
-gff$V4<-gff$V4/1000000
-gff$V5<-gff$V5/1000000
-gff$V10<-gff$V4+((gff$V5-gff$V4)/2)
-gff<-gff[order(gff$V4),]
-gff$V11<-c(-1.8,-2)
+gffs<-list()
+gwas<-list()
+
+for (i in 1:dim(hits)[1]) {
+
+  #gff
+  gff<-read.table(hitsdir[i])
+  gff$V9<-substr(unlist(lapply(strsplit(gff$V9,split = "\\;"),"[[",1)),8,12)
+  gff$V4<-gff$V4/1000000
+  gff$V5<-gff$V5/1000000
+  gff$V10<-gff$V4+((gff$V5-gff$V4)/2)
+  gff<-gff[order(gff$V4),]
+  gff$V11<-rep(c(-1.8,-2),10)[1:dim(gff)[1]]
+  gffs[[i]]<-gff
+  gwas[[i]]<-list()
+} 
+  #gwas
+  
+for (j in 1:length(traits)) {
+    Assoc <- read.table(paste0("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_",traits[j],".assoc.txt"),h=T,sep="\t",dec=".")
+    Assoc$chr<-paste0("Chr",Assoc$chr)
+    bonferonni=-log10(0.05/dim(Assoc)[1])
+    ymax<-(bonferonni+1)
+    for (i in 1:dim(hits)[1]) {
+      gff<-gffs[[i]]
+      Assoc.t<-Assoc[which(Assoc$chr==unique(gff$V1)),]
+      Assoc.t<-Assoc.t[which(Assoc.t$ps > (hits$V3[i]-20000)),]
+      Assoc.t<-Assoc.t[which(Assoc.t$ps < (hits$V3[i]+20000)),]
+      Assoc.t$ps<-Assoc.t$ps/1000000
+      Assoc.t$Manhattan<-(-log10(Assoc.t$p_lrt))
+      gwas[[i]][[j]]<-Assoc.t
+    }
+}
+
+mars<-list(c(5,5,2,0),c(5,2.5,2,2.5),c(5,0,2,5))
+
+# 2.3 Manhattan plots
 traits
 colors<-c("lightpink","lightblue","lightblue","white","white","white","greenyellow","greenyellow","greenyellow","green4","green4","green4","black")
 pch<-c(23,22,22,21,22,24,21,22,24,21,22,24,23)
-j=1
+
+par(mfrow=c(1,3),oma=c(0,0,0,0))
+
+for (i in 1:dim(hits)[1]) {
+par(mar=mars[[i]])
+
 for (j in 1:length(traits)) {
   
-  Assoc <- read.table(paste0("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_",traits[j],".assoc.txt"),h=T,sep="\t",dec=".")
-  bonferonni=-log10(0.05/dim(Assoc)[1])
-  Assoc$chr<-paste0("Chr",Assoc$chr)
-  Assoc<-Assoc[which(Assoc$chr==unique(gff$V1)),]
-  Assoc<-Assoc[which(Assoc$ps > (hits$V3[i]-20000)),]
-  Assoc<-Assoc[which(Assoc$ps < (hits$V3[i]+20000)),]
-  Assoc$ps<-Assoc$ps/1000000
-  Assoc$Manhattan<-(-log10(Assoc$p_lrt))
-  ymax<-(bonferonni+1)
-  
+  Assoc <- gwas[[i]][[j]]
   if (j==1) {
   plot(Assoc$ps,Assoc$Manhattan,cex=1.5,pch=pch[j],bg=colors[j],ylab="-log10(p-value)",
        xlab=paste0("Position along Chromosome ",hits[i,2]," (Mbp)"),las=1,
@@ -84,96 +102,13 @@ for (j in 1:length(traits)) {
 axis(side = 2,at = c(0,2,4,6,8),labels = c(0,2,4,6,8),las=1)
 abline(h=bonferonni,lty=2,col="darkred")
 abline(h=-1,lty=1,col="black")
-
+  gff<-gffs[[i]]
 for (k in 1:dim(gff)[1]) {
 polygon(x=c(gff[k,4],gff[k,4],gff[k,5],gff[k,5]),y=c(-.5,-1.5,-1.5,-.5),col = rgb(0,.5,.5,1))
-text(gff[k,10],gff[k,11],gff[k,9],cex = .5)
+text(gff[k,10],gff[k,11],gff[k,9],cex = .75)
+}
 }
 
-
-#second locus
-i<-2
-par(mar=c(5,2.5,2,2.5))
-gff<-read.table(hitsdir[i])
-gff$V9<-substr(unlist(lapply(strsplit(gff$V9,split = "\\;"),"[[",1)),8,12)
-gff$V4<-gff$V4/1000000
-gff$V5<-gff$V5/1000000
-gff$V10<-gff$V4+((gff$V5-gff$V4)/2)
-gff<-gff[order(gff$V4),]
-gff$V11<-c(-1.8,-2)
-traits
-colors<-c("lightpink","lightblue","lightblue","white","white","white","greenyellow","greenyellow","greenyellow","green4","green4","green4","black")
-pch<-c(23,22,22,21,22,24,21,22,24,21,22,24,23)
-j=1
-for (j in 1:length(traits)) {
-  
-  Assoc <- read.table(paste0("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_",traits[j],".assoc.txt"),h=T,sep="\t",dec=".")
-  bonferonni=-log10(0.05/dim(Assoc)[1])
-  Assoc$chr<-paste0("Chr",Assoc$chr)
-  Assoc<-Assoc[which(Assoc$chr==unique(gff$V1)),]
-  Assoc<-Assoc[which(Assoc$ps > (hits$V3[i]-20000)),]
-  Assoc<-Assoc[which(Assoc$ps < (hits$V3[i]+20000)),]
-  Assoc$ps<-Assoc$ps/1000000
-  Assoc$Manhattan<-(-log10(Assoc$p_lrt))
-  ymax<-(bonferonni+1)
-  
-  if (j==1) {
-    plot(Assoc$ps,Assoc$Manhattan,cex=1.5,pch=pch[j],bg=colors[j],ylab="-log10(p-value)",
-         xlab=paste0("Position along Chromosome ",hits[i,2]," (Mbp)"),las=1,
-         main=paste0("Manhattan plot at locus ",i),ylim=c(-2,ymax),yaxt="n",
-         xlim=c(min(hits[i,3]/1000000)-.02,max(hits[i,3]/1000000)+.02))
-  }else{points(Assoc$ps,Assoc$Manhattan,cex=1.5,pch=pch[j],bg=colors[j])}
-}
-axis(side = 2,at = c(0,2,4,6,8),labels = c(0,2,4,6,8),las=1)
-abline(h=bonferonni,lty=2,col="darkred")
-abline(h=-1,lty=1,col="black")
-
-for (k in 1:dim(gff)[1]) {
-  polygon(x=c(gff[k,4],gff[k,4],gff[k,5],gff[k,5]),y=c(-.5,-1.5,-1.5,-.5),col = rgb(0,.5,.5,1))
-  text(gff[k,10],gff[k,11],gff[k,9],cex = .5)
-}
-
-# third locus
-i<-3
-par(mar=c(5,0,2,5))
-gff<-read.table(hitsdir[i])
-gff$V9<-substr(unlist(lapply(strsplit(gff$V9,split = "\\;"),"[[",1)),8,12)
-gff$V4<-gff$V4/1000000
-gff$V5<-gff$V5/1000000
-gff$V10<-gff$V4+((gff$V5-gff$V4)/2)
-gff<-gff[order(gff$V4),]
-gff$V11<-rep(c(-1.8,-2),10)[1:dim(gff)[1]]
-traits
-colors<-c("lightpink","lightblue","lightblue","white","white","white","greenyellow","greenyellow","greenyellow","green4","green4","green4","black")
-pch<-c(23,22,22,21,22,24,21,22,24,21,22,24,23)
-j=1
-for (j in 1:length(traits)) {
-  
-  Assoc <- read.table(paste0("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_",traits[j],".assoc.txt"),h=T,sep="\t",dec=".")
-  bonferonni=-log10(0.05/dim(Assoc)[1])
-  Assoc$chr<-paste0("Chr",Assoc$chr)
-  Assoc<-Assoc[which(Assoc$chr==unique(gff$V1)),]
-  Assoc<-Assoc[which(Assoc$ps > (hits$V3[i]-20000)),]
-  Assoc<-Assoc[which(Assoc$ps < (hits$V3[i]+20000)),]
-  Assoc$ps<-Assoc$ps/1000000
-  Assoc$Manhattan<-(-log10(Assoc$p_lrt))
-  ymax<-(bonferonni+1)
-  
-  if (j==1) {
-    plot(Assoc$ps,Assoc$Manhattan,cex=1.5,pch=pch[j],bg=colors[j],ylab="-log10(p-value)",
-         xlab=paste0("Position along Chromosome ",hits[i,2]," (Mbp)"),las=1,
-         main=paste0("Manhattan plot at locus ",i),ylim=c(-2,ymax),yaxt="n",
-         xlim=c(min(hits[i,3]/1000000)-.02,max(hits[i,3]/1000000)+.02))
-  }else{points(Assoc$ps,Assoc$Manhattan,cex=1.5,pch=pch[j],bg=colors[j])}
-}
-axis(side = 2,at = c(0,2,4,6,8),labels = c(0,2,4,6,8),las=1)
-abline(h=bonferonni,lty=2,col="darkred")
-abline(h=-1,lty=1,col="black")
-
-for (k in 1:dim(gff)[1]) {
-  polygon(x=c(gff[k,4],gff[k,4],gff[k,5],gff[k,5]),y=c(-.5,-1.5,-1.5,-.5),col = rgb(0,.5,.5,1))
-  text(gff[k,10],gff[k,11],gff[k,9],cex = .5)
-}
 
 
 # Venn diagram
@@ -249,7 +184,7 @@ boxplot(phenotypes$Sepal_Length~phenotypes$snp_4_1601862)
 
 
 # Not used
-# manhattan for each trait separetely
+# Manhattan for each trait separately
 i<-1
 (geneid<-gff$gene[i])
 (traits<-unique(gene[which(gene$gene==gff$gene[i]),"trait"]))
