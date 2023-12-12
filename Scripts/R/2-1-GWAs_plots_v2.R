@@ -34,7 +34,7 @@ for (i in 1:length(traits)) {
 # 2.1 prepare files
 
 hitsdir<-grep(pattern="txt",grep(pattern = "Hits",x = list.files("Genetics/",full.names = T),value = T),value = T)
-for (i in 1:length(hitslist)) {if(i==1){hits<-read.table(hitsdir[i],sep = "_")}else{hits<-rbind(hits,read.table(hitsdir[i],sep = "_"))}}
+for (i in 1:length(hitsdir)) {if(i==1){hits<-read.table(hitsdir[i],sep = "_")}else{hits<-rbind(hits,read.table(hitsdir[i],sep = "_"))}}
 hitsdir<-grep(pattern="gff",grep(pattern = "Hits",x = list.files("Genetics/",full.names = T),value = T),value = T)
 hitsnames<-grep(pattern="gff",grep(pattern = "Hits",x = list.files("Genetics/",full.names = F),value = T),value = T)
 hitsnames<-unlist(lapply(strsplit(hitsnames,split = "\\."),"[[",1))
@@ -60,6 +60,7 @@ for (i in 1:dim(hits)[1]) {
   gwas[[i]]<-list()
 } 
   #gwas
+# This takes some time, better use "load" below
   
 for (j in 1:length(traits)) {
     Assoc <- read.table(paste0("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_",traits[j],".assoc.txt"),h=T,sep="\t",dec=".")
@@ -77,13 +78,17 @@ for (j in 1:length(traits)) {
     }
 }
 
-mars<-list(c(5,5,2,0),c(5,2.5,2,2.5),c(5,0,2,5))
+save(gwas,file = "Genetics/Manhattan_data.Rdata")
 
 # 2.3 Manhattan plots
+load("Genetics/Manhattan_data.Rdata")
+## number of analyzed SNPs/var = 540092
+bonferonni<-(-log10(.05/540092))
+ymax=8
 traits
 colors<-c("lightpink","lightblue","lightblue","white","white","white","greenyellow","greenyellow","greenyellow","green4","green4","green4","black")
 pch<-c(23,22,22,21,22,24,21,22,24,21,22,24,23)
-
+mars<-list(c(5,5,2,0),c(5,2.5,2,2.5),c(5,0,2,5))
 par(mfrow=c(1,3),oma=c(0,0,0,0))
 
 for (i in 1:dim(hits)[1]) {
@@ -110,7 +115,7 @@ text(gff[k,10],gff[k,11],gff[k,9],cex = .75)
 }
 
 
-
+####################### HERE
 # Venn diagram
 petal<-grep(pattern = "Petal",grep(pattern = "gene_list",list.files("GWAs/"),value = T),value = T)
 sepal<-grep(pattern = "Sepal",grep(pattern = "gene_list",list.files("GWAs/"),value = T),value = T)
