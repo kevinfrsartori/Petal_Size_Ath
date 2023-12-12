@@ -1,0 +1,14 @@
+Chr1	TAIR10	gene	28940147	28942623	.	+	.	ID=AT1G77000;Note=protein_coding_gene;Name=AT1G77000
+Chr1	TAIR10	gene	28942710	28944797	.	+	.	ID=AT1G77010;Note=protein_coding_gene;Name=AT1G77010
+Chr1	TAIR10	gene	28944843	28947031	.	-	.	ID=AT1G77020;Note=protein_coding_gene;Name=AT1G77020
+Chr1	TAIR10	gene	28947743	28951599	.	-	.	ID=AT1G77030;Note=protein_coding_gene;Name=AT1G77030
+Chr1	TAIR10	gene	28947554	28947625	.	-	.	ID=AT1G77040;Note=tRNA;Name=AT1G77040
+Chr1	TAIR10	gene	28951685	28953509	.	-	.	ID=AT1G77060;Note=protein_coding_gene;Name=AT1G77060
+Chr1	TAIR10	gene	28955637	28960096	.	+	.	ID=AT1G77080;Note=protein_coding_gene;Name=AT1G77080
+Chr1	TAIR10	gene	28960387	28961922	.	-	.	ID=AT1G77090;Note=protein_coding_gene;Name=AT1G77090
+Chr1	TAIR10	gene	28962508	28963149	.	+	.	ID=AT1G77093;Note=protein_coding_gene;Name=AT1G77093
+Chr1	TAIR10	gene	28965772	28967066	.	-	.	ID=AT1G77100;Note=protein_coding_gene;Name=AT1G77100
+Chr1	TAIR10	gene	28970802	28974603	.	+	.	ID=AT1G77110;Note=protein_coding_gene;Name=AT1G77110
+Chr1	TAIR10	gene	28975394	28977417	.	+	.	ID=AT1G77120;Note=protein_coding_gene;Name=AT1G77120
+Chr1	TAIR10	gene	28977357	28978743	.	-	.	ID=AT1G77122;Note=protein_coding_gene;Name=AT1G77122
+Chr1	TAIR10	gene	28978894	28981345	.	-	.	ID=AT1G77130;Note=protein_coding_gene;Name=AT1G77130
