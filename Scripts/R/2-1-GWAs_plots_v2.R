@@ -7,6 +7,7 @@
 
 
 # 1 - Screen all GWAs for Hits
+#-----------------------------
 
 phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
 names(phenotypes)[5]<-"Ovule_Number"
@@ -30,6 +31,7 @@ for (i in 1:length(traits)) {
 # Above data are processed under linux to get gff files around the hit (among others)
 
 # 2 - Plot Hits with all traits GWAs
+#-----------------------------------
 
 # 2.1 prepare files
 
@@ -115,30 +117,37 @@ text(gff[k,10],gff[k,11],gff[k,9],cex = .75)
 }
 
 
-####################### HERE
-# Venn diagram
-petal<-grep(pattern = "Petal",grep(pattern = "gene_list",list.files("GWAs/"),value = T),value = T)
-sepal<-grep(pattern = "Sepal",grep(pattern = "gene_list",list.files("GWAs/"),value = T),value = T)
-ovule<-grep(pattern = "Ovule",grep(pattern = "gene_list",list.files("GWAs/"),value = T),value = T)
-stamen<-grep(pattern = "Sta",grep(pattern = "gene_list",list.files("GWAs/"),value = T),value = T)
-leaf<-grep(pattern = "Leaf",grep(pattern = "gene_list",list.files("GWAs/"),value = T),value = T)
-
-petal_list<-unique(rbind(read.table(paste0("GWAs/",petal[1])),read.table(paste0("GWAs/",petal[2])),read.table(paste0("GWAs/",petal[3]))))[,1]
-sepal_list<-unique(rbind(read.table(paste0("GWAs/",sepal[1])),read.table(paste0("GWAs/",sepal[2])),read.table(paste0("GWAs/",sepal[3]))))[,1]
-ovule_list<-read.table(paste0("GWAs/",ovule[1]))[,1]
-stamen_list<-unique(rbind(read.table(paste0("GWAs/",stamen[1])),read.table(paste0("GWAs/",stamen[2])) ))[,1]
-leaf_list<-unique(rbind(read.table(paste0("GWAs/",leaf[1])),read.table(paste0("GWAs/",leaf[2])),read.table(paste0("GWAs/",leaf[3]))))[,1]
-
+# 3 - VENN DIAGRAMS
+#------------------
 library(VennDiagram)
 library(tidyverse)
 library(hrbrthemes)
 library(tm)
 library(proustr)
 
+# All traits
+# Venn diagram - SNPs
+petal<-grep(pattern = "Petal",grep(pattern = "top100",list.files("Genetics/"),value = T),value = T)
+petal<-petal[-grep(pattern = "annotated",petal)]
+sepal<-grep(pattern = "Sepal",grep(pattern = "top100",list.files("Genetics/"),value = T),value = T)
+sepal<-sepal[-grep(pattern = "annotated",sepal)]
+ovule<-grep(pattern = "Ovule",grep(pattern = "top100",list.files("Genetics/"),value = T),value = T)
+ovule<-ovule[-grep(pattern = "annotated",ovule)]
+stamen<-grep(pattern = "Stamen",grep(pattern = "top100",list.files("Genetics/"),value = T),value = T)
+stamen<-stamen[-grep(pattern = "annotated",stamen)]
+leaf<-grep(pattern = "Leaf",grep(pattern = "top100",list.files("Genetics/"),value = T),value = T)
+leaf<-leaf[-grep(pattern = "annotated",leaf)]
+
+petal_list<-unique(rbind(read.table(paste0("Genetics/",petal[1])),read.table(paste0("Genetics/",petal[2])),read.table(paste0("Genetics/",petal[3]))))[,1]
+sepal_list<-unique(rbind(read.table(paste0("Genetics/",sepal[1])),read.table(paste0("Genetics/",sepal[2])),read.table(paste0("Genetics/",sepal[3]))))[,1]
+ovule_list<-read.table(paste0("Genetics/",ovule[1]))[,1]
+stamen_list<-unique(rbind(read.table(paste0("Genetics/",stamen[1])),read.table(paste0("Genetics/",stamen[2])) ))[,1]
+leaf_list<-unique(rbind(read.table(paste0("Genetics/",leaf[1])),read.table(paste0("Genetics/",leaf[2])),read.table(paste0("Genetics/",leaf[3]))))[,1]
+
 venn.diagram(
-  x = list(petal_list,sepal_list,ovule_list,stamen_list,leaf_list),
-  category.names = c("Leaf","Ovule","Petal","Sepal","Stamen"),
-  filename = "Figures/Venn_diagramm_top100.png",
+  x = list(leaf_list,sepal_list,stamen_list,petal_list),
+  category.names = c("Leaf","Sepal","Stamen","Petal"),
+  filename = "Figures/Venn_diagramm_All_top_100_SNPs.png",
   output=TRUE,
   imagetype="png" ,
   height = 800 , 
@@ -146,72 +155,241 @@ venn.diagram(
   resolution = 100,
   compression = "lzw",
   lwd = 3,
-  col=c("green4","lightpink","grey50","greenyellow","lightblue"),
-  fill = c(alpha("green4",0.3), alpha("lightpink",0.3), alpha("grey50",0.3), alpha("greenyellow",0.3), alpha("lightblue",0.3)),
+  col=c("green4","greenyellow","lightblue","grey50"),
+  fill = c(alpha("green4",0.3), alpha("greenyellow",0.3), alpha("lightblue",0.3), alpha("grey50",0.3)),
   cex = 2,
   fontfamily = "sans",
   cat.cex = 2,
   cat.default.pos = "outer",
-  cat.pos = c(-50, 10, 120,90,20),
-  #cat.dist = c(0.055, 0.055, 0.085,0.055, 0.055),
+  cat.pos = c(0, 0,0,0),
+  #cat.dist = c(0.055, 0.055, 0.055, 0.055),
   cat.fontfamily = "sans",
-  cat.col = c("green4","lightpink","grey50","greenyellow","lightblue"),
+  cat.col = c("green4","greenyellow","lightblue","grey50"),
 )
 
-# Plot SNPs effects
-library(vcfR)
 
-# snp_1_28960616
-vcf<-read.vcfR("GWAs/annotated_top100_Petal_Width.ann.vcf")
-snp_1_28960616<-data.frame(genotypeID=colnames(vcf@gt),snp_1_28960616=vcf@gt[which(vcf@fix[,3] == "snp_1_28960616"),])[-1,]
-snp_1_28960616$genotypeID<-unlist(strsplit(snp_1_28960616$genotypeID,"_"))[(1:length(snp_1_28960616$genotypeID))*2]
-#  snp_4_15627234
-vcf<-read.vcfR("GWAs/annotated_top100_Sepal_Area.ann.vcf")
-snp_4_15627234<-data.frame(genotypeID=colnames(vcf@gt), snp_4_15627234=vcf@gt[which(vcf@fix[,3] == "snp_4_15627234"),])[-1,]
-snp_4_15627234$genotypeID<-unlist(strsplit( snp_4_15627234$genotypeID,"_"))[(1:length( snp_4_15627234$genotypeID))*2]
-# snp_4_1601862
-vcf<-read.vcfR("GWAs/annotated_top100_Sepal_Length.ann.vcf")
-snp_4_1601862<-data.frame(genotypeID=colnames(vcf@gt),snp_4_1601862=vcf@gt[which(vcf@fix[,3] == "snp_4_1601862"),])[-1,]
-snp_4_1601862$genotypeID<-unlist(strsplit(snp_4_1601862$genotypeID,"_"))[(1:length(snp_4_1601862$genotypeID))*2]
 
-genotypes<-merge(snp_1_28960616,snp_4_15627234)
-genotypes<-merge(genotypes,snp_4_1601862)
+# Venn diagram - Genes
+petal<-grep(pattern = "Petal",grep(pattern = "annotated",list.files("Genetics/"),value = T),value = T)
+sepal<-grep(pattern = "Sepal",grep(pattern = "annotated",list.files("Genetics/"),value = T),value = T)
+ovule<-grep(pattern = "Ovule",grep(pattern = "annotated",list.files("Genetics/"),value = T),value = T)
+stamen<-grep(pattern = "Stamen",grep(pattern = "annotated",list.files("Genetics/"),value = T),value = T)
+leaf<-grep(pattern = "Leaf",grep(pattern = "annotated",list.files("Genetics/"),value = T),value = T)
 
-phenotypes<-read.table("U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
+petal_list<-unique(rbind(read.table(paste0("Genetics/",petal[1])),read.table(paste0("Genetics/",petal[2])),read.table(paste0("Genetics/",petal[3]))))[,1]
+sepal_list<-unique(rbind(read.table(paste0("Genetics/",sepal[1])),read.table(paste0("Genetics/",sepal[2])),read.table(paste0("Genetics/",sepal[3]))))[,1]
+ovule_list<-read.table(paste0("Genetics/",ovule[1]))[,1]
+stamen_list<-unique(rbind(read.table(paste0("Genetics/",stamen[1])),read.table(paste0("Genetics/",stamen[2])) ))[,1]
+leaf_list<-unique(rbind(read.table(paste0("Genetics/",leaf[1])),read.table(paste0("Genetics/",leaf[2])),read.table(paste0("Genetics/",leaf[3]))))[,1]
+
+venn.diagram(
+  x = list(leaf_list,sepal_list,stamen_list,petal_list),
+  category.names = c("Leaf","Sepal","Stamen","Petal"),
+  filename = "Figures/Venn_diagramm_All_genes.png",
+  output=TRUE,
+  imagetype="png" ,
+  height = 800 , 
+  width = 800 , 
+  resolution = 100,
+  compression = "lzw",
+  lwd = 3,
+  col=c("green4","greenyellow","lightblue","grey50"),
+  fill = c(alpha("green4",0.3), alpha("greenyellow",0.3), alpha("lightblue",0.3), alpha("grey50",0.3)),
+  cex = 2,
+  fontfamily = "sans",
+  cat.cex = 2,
+  cat.default.pos = "outer",
+  cat.pos = c(0, 0,0,0),
+  #cat.dist = c(0.055, 0.055, 0.055, 0.055),
+  cat.fontfamily = "sans",
+  cat.col = c("green4","greenyellow","lightblue","grey50"),
+)
+
+# Area
+# Venn diagram - SNPs
+
+petal_list<-read.table("Genetics/top100_Petal_Area.txt")[,1]
+sepal_list<-read.table("Genetics/top100_Sepal_Area.txt")[,1]
+leaf_list<-read.table("Genetics/top100_Leaf_Area.txt")[,1]
+
+venn.diagram(
+  x = list(leaf_list,sepal_list,petal_list),
+  category.names = c("Leaf","Sepal","Petal"),
+  filename = "Figures/Venn_diagramm_Area_top_100_SNPs.png",
+  output=TRUE,
+  imagetype="png" ,
+  height = 800 , 
+  width = 800 , 
+  resolution = 100,
+  compression = "lzw",
+  lwd = 3,
+  col=c("green4","greenyellow","grey50"),
+  fill = c(alpha("green4",0.3), alpha("greenyellow",0.3),  alpha("grey50",0.3)),
+  cex = 2,
+  fontfamily = "sans",
+  cat.cex = 2,
+  cat.default.pos = "outer",
+  cat.pos = c(25,35,45),
+  #cat.dist = c(0.055, 0.055, 0.055, 0.055),
+  cat.fontfamily = "sans",
+  cat.col = c("green4","greenyellow","grey50"),
+)
+
+# Venn diagram - Genes
+petal_list<-read.table("Genetics/annotated_simple_top100_Petal_Area.txt")[,1]
+sepal_list<-read.table("Genetics/annotated_simple_top100_Sepal_Area.txt")[,1]
+leaf_list<-read.table("Genetics/annotated_simple_top100_Leaf_Area.txt")[,1]
+
+venn.diagram(
+  x = list(leaf_list,sepal_list,petal_list),
+  category.names = c("Leaf","Sepal","Petal"),
+  filename = "Figures/Venn_diagramm_Area_genes.png",
+  output=TRUE,
+  imagetype="png" ,
+  height = 800 , 
+  width = 800 , 
+  resolution = 100,
+  compression = "lzw",
+  lwd = 3,
+  col=c("green4","greenyellow","grey50"),
+  fill = c(alpha("green4",0.3), alpha("greenyellow",0.3),  alpha("grey50",0.3)),
+  cex = 2,
+  fontfamily = "sans",
+  cat.cex = 2,
+  cat.default.pos = "outer",
+  cat.pos = c(25,35,45),
+  #cat.dist = c(0.055, 0.055, 0.055, 0.055),
+  cat.fontfamily = "sans",
+  cat.col = c("green4","greenyellow","grey50"),
+)
+
+
+# Length
+# Venn diagram - SNPs
+petal_list<-read.table("Genetics/top100_Petal_Length.txt")[,1]
+sepal_list<-read.table("Genetics/top100_Sepal_Length.txt")[,1]
+stamen_list<-read.table("Genetics/top100_Long_Stamens.txt")[,1]
+leaf_list<-read.table("Genetics/top100_Leaf_Length.txt")[,1]
+
+venn.diagram(
+  x = list(leaf_list,sepal_list,stamen_list,petal_list),
+  category.names = c("Leaf","Sepal","Stamen","Petal"),
+  filename = "Figures/Venn_diagramm_Length_top_100_SNPs.png",
+  output=TRUE,
+  imagetype="png" ,
+  height = 800 , 
+  width = 800 , 
+  resolution = 100,
+  compression = "lzw",
+  lwd = 3,
+  col=c("green4","greenyellow","lightblue","grey50"),
+  fill = c(alpha("green4",0.3), alpha("greenyellow",0.3), alpha("lightblue",0.3), alpha("grey50",0.3)),
+  cex = 2,
+  fontfamily = "sans",
+  cat.cex = 2,
+  cat.default.pos = "outer",
+  cat.pos = c(0, 0,0,0),
+  #cat.dist = c(0.055, 0.055, 0.055, 0.055),
+  cat.fontfamily = "sans",
+  cat.col = c("green4","greenyellow","lightblue","grey50"),
+)
+
+
+
+# Venn diagram - Genes
+petal_list<-read.table("Genetics/annotated_simple_top100_Petal_Length.txt")[,1]
+sepal_list<-read.table("Genetics/annotated_simple_top100_Sepal_Length.txt")[,1]
+stamen_list<-read.table("Genetics/annotated_simple_top100_Long_Stamens.txt")[,1]
+leaf_list<-read.table("Genetics/annotated_simple_top100_Leaf_Length.txt")[,1]
+
+venn.diagram(
+  x = list(leaf_list,sepal_list,stamen_list,petal_list),
+  category.names = c("Leaf","Sepal","Stamen","Petal"),
+  filename = "Figures/Venn_diagramm_Length_genes.png",
+  output=TRUE,
+  imagetype="png" ,
+  height = 800 , 
+  width = 800 , 
+  resolution = 100,
+  compression = "lzw",
+  lwd = 3,
+  col=c("green4","greenyellow","lightblue","grey50"),
+  fill = c(alpha("green4",0.3), alpha("greenyellow",0.3), alpha("lightblue",0.3), alpha("grey50",0.3)),
+  cex = 2,
+  fontfamily = "sans",
+  cat.cex = 2,
+  cat.default.pos = "outer",
+  cat.pos = c(0, 0,0,0),
+  #cat.dist = c(0.055, 0.055, 0.055, 0.055),
+  cat.fontfamily = "sans",
+  cat.col = c("green4","greenyellow","lightblue","grey50"),
+)
+
+
+
+# Petal Area Manhattan plot
+par(mfrow=c(1,1),mar=c(4,3,2,1),oma=c(0,0,0,0))
+
+Assoc <- read.table("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_Petal_Area.assoc.txt",h=T,sep="\t",dec=".")
+bonferonni<-(-log10(0.05/dim(Assoc)[1]))
+Assoc$pos<-Assoc$ps
+for (i in 2:5) { Assoc$pos[which(Assoc$chr==i)]<-Assoc$pos[which(Assoc$chr==i)]+max(Assoc$pos[which(Assoc$chr==i-1)]) }
+#Assoc$chr<-paste0("Chr",Assoc$chr)
+Assoc$Manhattan<-(-log10(Assoc$p_lrt))
+ymax<-(bonferonni+1)
+Assoc$pos<-Assoc$pos/1000000
+Assoc<-Assoc[which(Assoc$Manhattan>1),]
+
+palette(c("gray30","gray60","gray40","gray70","gray50"))
+plot(Assoc$pos,Assoc$Manhattan,cex=0.5,pch=16,col=Assoc$chr,ylab="",xlab="",las=1,
+     main="Petal Area GWAs",ylim=c(1,ymax))
+axis(side = 2,at = 4,labels = "-log10(p-value)",line = 1,tick = F)
+axis(side = 1,at = 60,labels = "SNPs relative position (Mbp)",line = 1,tick = F)
+
+abline(h=bonferonni,lty=2,col="darkred")
+
+top100<-order(Assoc$Manhattan,decreasing = T)[1:100]
+palette(c(rgb(0,.5,.5,1),rgb(0,.8,.8,1),rgb(0,.6,.6,1),rgb(0,.9,.9,1),rgb(0,.7,.7,1)))
+points(Assoc$pos[top100],Assoc$Manhattan[top100],cex=0.75,pch=16,col=Assoc$chr[top100])
+
+# All traits Manhattan plots
+
+par(mfrow=c(6,1),mar=c(1,3,0,.2),oma=c(4,0,0,0))
+phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
 names(phenotypes)[5]<-"Ovule_Number"
-phenotypes<-merge(phenotypes,genotypes,by.x="Genotype",by.y="genotypeID")
-boxplot(phenotypes$Petal_Width~phenotypes$snp_1_28960616)
-boxplot(phenotypes$Sepal_Area~phenotypes$snp_4_15627234)
-boxplot(phenotypes$Sepal_Length~phenotypes$snp_4_1601862)
-
-
-
-
-
-# Not used
-# Manhattan for each trait separately
-i<-1
-(geneid<-gff$gene[i])
-(traits<-unique(gene[which(gene$gene==gff$gene[i]),"trait"]))
-(info<-gff[which(gff$gene==geneid),][1,])
-
-par(mfrow=c(length(traits),1))
+traits<-colnames(phenotypes)[c(5:16,22)]
+traits<-traits[-which(traits=="Petal_Area")]
 for (j in 1:length(traits)) {
   
-  Assoc <- read.table(paste0("GWAs/SNP_1001g_filtered_",traits[j],".assoc.txt"),h=T,sep="\t",dec=".")
-  Assoc$chr<-paste0("Chr",Assoc$chr)
-  Assoc<-Assoc[which(Assoc$chr==info$V1[1]),]
+  Assoc <- read.table(paste0("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_",traits[j],".assoc.txt"),h=T,sep="\t",dec=".")
+  bonferonni<-(-log10(0.05/dim(Assoc)[1]))
+  Assoc$pos<-Assoc$ps
+  for (i in 2:5) { Assoc$pos[which(Assoc$chr==i)]<-Assoc$pos[which(Assoc$chr==i)]+max(Assoc$pos[which(Assoc$chr==i-1)]) }
   Assoc$Manhattan<-(-log10(Assoc$p_lrt))
-  ymax<-(-log10(0.05/length(Assoc$Manhattan))+1)
+  ymax<-(bonferonni+1)
+  Assoc$pos<-Assoc$pos/1000000
+  Assoc<-Assoc[which(Assoc$Manhattan>1),]
   
-  plot(Assoc$ps,Assoc$Manhattan,cex=0.5,pch=16,col=1,ylab="-log10(p-value)",xlab="",las=1,
-       main=paste0("GWAs ",traits[j]),ylim=c(0,ymax),
-       xlim=c(min(info[,4:5])-20000,max(info[,4:5])+20000))
-  abline(h=-log10(0.05/length(Assoc$Manhattan)),lty=2,col="red")
+  palette(c("gray30","gray60","gray40","gray70","gray50"))
+  plot(Assoc$pos,Assoc$Manhattan,cex=0.5,pch=16,col=Assoc$chr,
+       ylab="",xlab="",las=1,xaxt="n",
+       ylim=c(1,ymax))
+  axis(side = 2,at = 4,labels = "-log10(p-value)",line = 1,tick = F)
+  axis(1,at = c(0,20,40,60,80,100,120),labels = c("","","","","","",""))
   
-  polygon(x=c(info[,4],info[,4],info[,5],info[,5]),y=c(0,.2,.2,0),col = 1)
+  text(0,7.5,gsub(pattern = "_",replacement = " ",traits[j]),pos=4)
+  abline(h=bonferonni,lty=2,col="darkred")
+  if (j %in% c(6,12)) {   
+    axis(1,at = c(0,20,40,60,80,100,120),labels = c(0,20,40,60,80,100,120))
+    axis(side = 1,at = 60,labels = "SNPs relative position (Mbp)",line = 1,tick = F)
+}
+  
 }
 
-dev.off()
 
-# 
+# 4 - Filter genes by function
+petal_list<-read.table("Genetics/annotated_simple_top100_Petal_Area.txt")[,1:3]
+colnames(petal_list)<-c("gene_ID","gene_name","SNP")
+petal_list$link<-paste0("https://www.arabidopsis.org/servlets/TairObject?type=locus&name=",petal_list$gene_ID)
+write.csv2(petal_list,file = "Genetics/functionnal_annotation_Petal_Area.csv",quote = F,row.names = F)
+
