@@ -135,11 +135,11 @@ pie(table(res$type),col = palette(),labels = sub("0"," ",table(res$type)))
 axis(side = 1,at = 0,labels = "Przybylska et al. 2023",tick = F,line = -2)
 # Legend
 par(mar=c(0,0,0,0))
-plot(rep(1,7),1:7,xlim=c(0,10),ylim=c(0,9),pch=22,bg=palette(),cex=4,bty="n",xaxt="n",yaxt="n")
-text(x = c(rep(2,7),1),y = 1:8, pos=4, labels=c(levels(res$type),"Legend"),font=c(rep(1,7),2))
+plot(rep(1,7),1:7,xlim=c(0,10),ylim=c(0,9),pch=22,bg=rev(palette()),cex=4,bty="n",xaxt="n",yaxt="n")
+text(x = c(rep(2,7),1),y = c(1:7,8.5), pos=4, labels=c(rev(levels(res$type)),"Legend"),font=c(rep(1,7),2))
 
 # Panel C - PiN/PiS-HS relationship
-
+# !!!!! need to rerun pinpis-HS avec les bonnes donnees
 
 # Panel D - SFS-HS
 handtable<-as.matrix(read.table("Genetics/sfs/DAF_table_rel.95_.1to.5.txt"))
@@ -149,4 +149,8 @@ barplot(height = handtable[,1:9],beside = T,col=shade,las=1,main = "Allele count
 legend(x = 75,y = 4e+05,legend = rownames(handtable),fill = shade,cex = .75,ncol = 2)
 
 # Panel E - Large petal allele freq-HS
+snpeffect <- read.table("Genetics/bslmm_top100_Leaf_Area.param.txt",h=T,sep="\t",dec=".")
+snpeffect$snpeffect<-snpeffect$alpha+snpeffect$beta*snpeffect$gamma
+
+
 

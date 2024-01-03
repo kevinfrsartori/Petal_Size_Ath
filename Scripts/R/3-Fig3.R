@@ -41,6 +41,7 @@ text(-4.2,-.2+0.02,"10 relevant genes",pos=4)
 snpeffect <- read.table("Genetics/bslmm_top100_Leaf_Area.param.txt",h=T,sep="\t",dec=".")
 snpeffect$snpeffect<-snpeffect$alpha+snpeffect$beta*snpeffect$gamma
 hist(snpeffect$snpeffect,breaks = 20)
+# !!!! TO DO : take into consideration the ancestry, and plot derived allele freq
   
 # 3 - Petal and fitness
 phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
