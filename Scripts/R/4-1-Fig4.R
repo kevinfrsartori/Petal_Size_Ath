@@ -149,8 +149,44 @@ barplot(height = handtable[,1:9],beside = T,col=shade,las=1,main = "Allele count
 legend(x = 75,y = 4e+05,legend = rownames(handtable),fill = shade,cex = .75,ncol = 2)
 
 # Panel E - Large petal allele freq-HS
-snpeffect <- read.table("Genetics/bslmm_top100_Leaf_Area.param.txt",h=T,sep="\t",dec=".")
+# allele 0 versus 1 recovered from glm data
+assoc<-read.table("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_Petal_Area.assoc.txt",h=T,sep="\t",dec=".")
+# effect recovered from bslmm
+snpeffect <- read.table("Genetics/bslmm_top100_Petal_Area.param.txt",h=T,sep="\t",dec=".")
 snpeffect$snpeffect<-snpeffect$alpha+snpeffect$beta*snpeffect$gamma
+snpeffect<-merge(snpeffect,assoc[,c(2,5,6)],by="rs",all.x=T)
+# define "large petal allele"
+snpeffect$large_petal_allele<-snpeffect$allele1
+snpeffect$large_petal_allele[which(snpeffect$snpeffect<0)]<-snpeffect$allele0[which(snpeffect$snpeffect<0)]
+rm(assoc)
+# frq data per HS
+hsranges<-c(paste0("HS0",1:9),"HS10")
+for (i in hsranges) {
+hs<-read.table(paste0("Genetics/frq/Petal_Area.",i,".frq"))
+hs<-hs[which(hs$V7 %in% snpeffect$rs),]
+hs$allele_a<-unlist(lapply(X = strsplit(x = hs$V5, split = ":"),"[[",1))
+hs$frq_allele_a<-as.numeric(unlist(lapply(X = strsplit(x = hs$V5, split = ":"),"[[",2)))
+hs$allele_b<-unlist(lapply(X = strsplit(x = hs$V6, split = ":"),"[[",1))
+hs$frq_allele_b<-as.numeric(unlist(lapply(X = strsplit(x = hs$V6, split = ":"),"[[",2)))
+# merge large petal allele
+hs<-merge(hs,snpeffect[,c("rs","large_petal_allele")],by.x="V7",by.y="rs",all.x=T)
+# spot large petal allele freq
+hs$large_petal_allele_frq<-NA
+hs$large_petal_allele_frq[which(hs$allele_a==hs$large_petal_allele)]<-hs$frq_allele_a[which(hs$allele_a==hs$large_petal_allele)]
+hs$large_petal_allele_frq[which(hs$allele_b==hs$large_petal_allele)]<-hs$frq_allele_b[which(hs$allele_b==hs$large_petal_allele)]
+# merge with snpeffect
+snpeffect<-merge(snpeffect,hs[,c("V7","large_petal_allele_frq")],by.x="rs",by.y="V7",all.x = T)
+# rename
+colnames(snpeffect)[dim(snpeffect)[2]]<-paste0("large_petal_allele_frq_",i)
+}
+large_petal_allele_frq_per_hsrange<-apply(snpeffect[,grep("HS",colnames(snpeffect))],MARGIN = 2,FUN = sum,na.rm=T)/length(na.omit(snpeffect$large_petal_allele_frq_HS01))
+# Barplot 39 snps
+barplot(large_petal_allele_frq_per_hsrange,ylim=c(.2,.4),xpd=F,las=1,col=rgb(0,.6,.6),space=0)
+# Barplot candidate snps
+annot<-read.table("Genetics/functionnal_annotation_Petal_Area.csv",h=T,sep=",",dec=".")[,c("SNP","candidate")]
+annot<-annot[which(annot$candidate == "yes"),]
+large_petal_allele_frq_per_hsrange<-apply(snpeffect[which(snpeffect$rs %in% annot$SNP),grep("HS",colnames(snpeffect))],MARGIN = 2,FUN = sum,na.rm=T)/length(na.omit(snpeffect$large_petal_allele_frq_HS01))
+barplot(large_petal_allele_frq_per_hsrange,xpd=F,las=1,col=rgb(0,.6,.6),space=0,ylim=c(.05,.075))
 
 
 

@@ -38,7 +38,7 @@ text(-4.2,-.1+0.02,"Top 39 genes",pos=4)
 text(-4.2,-.2+0.02,"10 relevant genes",pos=4)
 
 # 2 - SNP effect
-snpeffect <- read.table("Genetics/bslmm_top100_Leaf_Area.param.txt",h=T,sep="\t",dec=".")
+snpeffect <- read.table("Genetics/bslmm_top100_Petal_Area.param.txt",h=T,sep="\t",dec=".")
 snpeffect$snpeffect<-snpeffect$alpha+snpeffect$beta*snpeffect$gamma
 hist(snpeffect$snpeffect,breaks = 20)
 # !!!! TO DO : take into consideration the ancestry, and plot derived allele freq
