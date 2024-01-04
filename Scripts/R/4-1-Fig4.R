@@ -6,47 +6,53 @@
 #------------------
 
 # Panel A - Habitat suitability map
+#----------------------------------
 
 library(raster)
 library(viridis)
 HS<-raster("../large_files/Ath_Petal_size/habitat_suitability/Niche_modelling/Habitat_suitability_Ath_2023-04-27.grd")
+# crop
 ath_dist<-as(extent(-10, 50, 35, 69), 'SpatialPolygons')
 crs(ath_dist) <- "+proj=longlat +datum=WGS84 +no_defs"
 HSath<-crop(HS, ath_dist)
 # visualize the map
-plot(HS$layer,col=hscol(255),las=1)
 hscol<-colorRampPalette(rev(viridis::inferno(4)))
-plot(HSath$layer,col=hscol(255),las=1)
+plot(HS$layer,col=hscol(255),las=1) # whole
+plot(HSath$layer,col=hscol(255),las=1) # cropped
 # studied accessions
 acc<-na.omit(read.table("Genetics/studied_acc.txt"))
 g1001<-na.omit(read.table("Genetics/accessions.txt",h=F,sep=",",as.is = 4)[,c(1,6,7,11)])
 colnames(g1001)<-c("accession_name","latitude","longitude","group")
 g1001<-g1001[which(g1001$accession_name %in% acc$V1),]
-# plot the collecting sites on the map
+# plot the studied sites on the map
 points(g1001$longitude,g1001$latitude,pch=21,col=rgb(0,.6,.6),cex=1,lwd=3)
 
 # Panel B - Trait-HS relationship
+#--------------------------------
+
 library(quantreg)
-# data from this study
+# 1 - data from this study
 phenotypes<-read.table("Phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
 names(phenotypes)[5]<-"Ovule_Number"
 phenotypes<-phenotypes[-which(is.na(phenotypes$Petal_Area)),]
+# habitat suitability data
 habsuit<-read.table("Niche_Modelling/accessions_1001g_habitatsuitability.csv",h=T,sep=",")
-# few accessions were removed due to poor climatic resolution in site surounded by sea, leading to a potential poor estimation of HS
+# few accessions were removed due to poor climatic resolution in site surrounded by sea, leading to a potential poor estimation of HS
 habsuit<-habsuit[-which(habsuit$HS < 0.2),]
 phenotypes<-merge(phenotypes,habsuit,by.x="Genotype",by.y="accession_name",all.x=T)
+# Biplot Petal Area ~ habitat suitability
 par(mar=c(4,4,0,0))
-# Petal
 layout(matrix(c(1,1,1,1,2,3,4,5),byrow = T,nrow=2),heights = c(2,1))
+
 plot(phenotypes$Petal_Area~phenotypes$HS,pch=21,lwd=1,bg=rgb(0,.6,.6),cex=1.5,
      xlab="Habitat suitability",ylab="Petal Area")
-#LM
+# linear model
 summod<-summary(lm(phenotypes$Petal_Area~phenotypes$HS))
 summod$coefficients
 segments(min(phenotypes$HS,na.rm = T),min(phenotypes$HS,na.rm = T)*summod$coefficients[2,1]+summod$coefficients[1,1],
          max(phenotypes$HS,na.rm = T),max(phenotypes$HS,na.rm = T)*summod$coefficients[2,1]+summod$coefficients[1,1],
          lwd=2,lty=1)
-#QR
+# quantile regressions
 rqfit95 <- rq(phenotypes$Petal_Area~phenotypes$HS,tau=0.95)
 rqfit05 <- rq(phenotypes$Petal_Area~phenotypes$HS,tau=0.05)
 anova(rqfit95,rqfit05)
@@ -57,29 +63,33 @@ segments(min(phenotypes$HS,na.rm = T),min(phenotypes$HS,na.rm = T)*rqfit05$coeff
          max(phenotypes$HS,na.rm = T),max(phenotypes$HS,na.rm = T)*rqfit05$coefficients[2]+rqfit05$coefficients[1],
          lwd=1,lty=2)
 
-# Camemberts
-# function:
+# 2 - Pie chart for other datasets
+# make function for reproducibility
 datapie<-function(traits,dataset){
 for (i in 1:(length(traits)-1)) {
+# estimate probability that a variable is qualitative (if there are too few categories compare to the number of data, we do not process it)
 quantiprob<-length(na.omit(unique(dataset[,i])))/length(na.omit(dataset[,i]))
 if(quantiprob<.1){
   if(i==1){
   res<-data.frame(trait=traits[i],slope="untested",triangle="untested",type="untested")
   }else{res<-rbind(res,c(traits[i],"untested","untested","untested"))}
 }else{
-# lm
+# linear model
 summod<-summary(lm(dataset[,i]~dataset$HS))
 if(summod$coefficients[2,4]<0.01){
 slope<-c("negative","neutral","positive")[sign(summod$coefficients[2,1])+2]
 }else{slope<-"flat"}
-# qr
+# quantile regression
 rqfit95 <- rq(dataset[,i]~dataset$HS,tau=0.95)
 rqfit05 <- rq(dataset[,i]~dataset$HS,tau=0.05)
+# if one slope is 0, the anova crash. We do not run the anova in that case.
 if(0 %in% c(rqfit05$coefficients[2],rqfit95$coefficients[2])){
   triangle<-"untested"
   type<-slope
 }else{
+# anova
 tritest<-anova(rqfit95,rqfit05)
+# If slopes are significantly different, the relationship is triangular
 if(tritest$table[1,4]<0.01){
   triangle<-"triangular"
   type<-paste0(slope," ",triangle)
@@ -93,20 +103,21 @@ if(i==1){
 }else{res<-rbind(res,c(traits[i],slope,triangle,type))}
 }
 }
+# define res$type as factor with predefined levels
 res$type<-factor(x = res$type,levels = c("negative triangular","negative","flat triangular","flat","positive triangular","positive","untested"))
 return(res)
 }
 
-# plots
+# Plot the pies
 par(mar=c(0,0,0,0))
-# All data from this study
+# 2.1 - All data from this study
 traits<-colnames(phenotypes)[c(5:16,22,27)]
 dataset<-phenotypes[,traits]
 (res<-datapie(traits,dataset))
 palette(c(rgb(0,0,1),rgb(.6,.6,1),rgb(0,0,0),rgb(.6,.6,.6),rgb(1,0,0),rgb(1,.6,.6),rgb(1,1,1)))
 pie(table(res$type),col = palette(),labels = sub("0"," ",table(res$type)))
 axis(side = 1,at = 0,labels = "This study",tick = F,line = -2)
-# 107 phenotypes
+# 2.2 - 107 phenotypes from Atwell et al. 2010
 pheno107<-read.table("Phenotypes/rawfiles/phenotypes107_gmeans.csv",h=T,sep=",")
 pheno107<-merge(pheno107,habsuit[,c(1,5)],by.x="accession_id",by.y="accession_name",all.x=T)
 traits<-colnames(pheno107)[-1]
@@ -115,7 +126,7 @@ dataset<-pheno107[,traits]
 palette(c(rgb(0,0,1),rgb(.6,.6,1),rgb(0,0,0),rgb(.6,.6,.6),rgb(1,0,0),rgb(1,.6,.6),rgb(1,1,1)))
 pie(table(res$type),col = palette(),labels = sub("0"," ",table(res$type)))
 axis(side = 1,at = 0,labels = "Atwell et al. 2010",tick = F,line = -2)
-# Przybylska data
+# 2.3 - Przybylska et al. 2023
 Przybylska<-read.table("Phenotypes/rawfiles/phenotypic_datarecord.txt",h=T,sep="\t",dec=",")
 Przybylska$X1001g_ID<-as.factor(Przybylska$X1001g_ID)
 traits<-levels(as.factor(Przybylska$traitName))
@@ -139,9 +150,11 @@ plot(rep(1,7),1:7,xlim=c(0,10),ylim=c(0,9),pch=22,bg=rev(palette()),cex=4,bty="n
 text(x = c(rep(2,7),1),y = c(1:7,8.5), pos=4, labels=c(rev(levels(res$type)),"Legend"),font=c(rep(1,7),2))
 
 # Panel C - PiN/PiS-HS relationship
+#----------------------------------
 # !!!!! need to rerun pinpis-HS avec les bonnes donnees
 
 # Panel D - SFS-HS
+#-----------------
 handtable<-as.matrix(read.table("Genetics/sfs/DAF_table_rel.95_.1to.5.txt"))
 colnames(handtable)<-substr(colnames(handtable),2,5)
 shade<-gray.colors(10,start = .8,end = .2,gamma = 1)
@@ -149,6 +162,7 @@ barplot(height = handtable[,1:9],beside = T,col=shade,las=1,main = "Allele count
 legend(x = 75,y = 4e+05,legend = rownames(handtable),fill = shade,cex = .75,ncol = 2)
 
 # Panel E - Large petal allele freq-HS
+#-------------------------------------
 # allele 0 versus 1 recovered from glm data
 assoc<-read.table("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_Petal_Area.assoc.txt",h=T,sep="\t",dec=".")
 # effect recovered from bslmm
@@ -179,8 +193,8 @@ snpeffect<-merge(snpeffect,hs[,c("V7","large_petal_allele_frq")],by.x="rs",by.y=
 # rename
 colnames(snpeffect)[dim(snpeffect)[2]]<-paste0("large_petal_allele_frq_",i)
 }
-large_petal_allele_frq_per_hsrange<-apply(snpeffect[,grep("HS",colnames(snpeffect))],MARGIN = 2,FUN = sum,na.rm=T)/length(na.omit(snpeffect$large_petal_allele_frq_HS01))
 # Barplot 39 snps
+large_petal_allele_frq_per_hsrange<-apply(snpeffect[,grep("HS",colnames(snpeffect))],MARGIN = 2,FUN = sum,na.rm=T)/length(na.omit(snpeffect$large_petal_allele_frq_HS01))
 barplot(large_petal_allele_frq_per_hsrange,ylim=c(.2,.4),xpd=F,las=1,col=rgb(0,.6,.6),space=0)
 # Barplot candidate snps
 annot<-read.table("Genetics/functionnal_annotation_Petal_Area.csv",h=T,sep=",",dec=".")[,c("SNP","candidate")]
