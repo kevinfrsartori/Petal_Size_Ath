@@ -11,12 +11,12 @@ pinpis$logpinpis<-log10(pinpis$PinPis)
 pinpis$logpinpis[which(pinpis$logpinpis=="-Inf")]<-NA
 hist(pinpis$logpinpis)
 
-# 1 - PINPIS plot
+# 1 - PINPIS plot 500 x 400
 par(mar=c(3.1,1,1,1))
 d<-density(x = na.omit(pinpis$logpinpis),bw = .1)
 plot(d,main = "PiN/PiS density distribution",ylim=c(-.2,.75),xlim=c(-4,2),
      yaxt="n",xaxt="n",xlab="")
-axis(side = 1,at = c(-3,-2,-1,0,1,2),labels = c(0.001,0.01,0.1,1,10,100))
+axis(side = 1,at = c(-3,-2,-1,0,1),labels = c(0.001,0.01,0.1,1,10))
 axis(side = 1,at = -1,labels = "PiN/PiS (log scale)",line = 1,tick = F)
 
 polygon(d,col = rgb(0,.6,.6))
@@ -41,9 +41,31 @@ text(-4.2,-.2+0.02,"10 relevant genes",pos=4)
 snpeffect <- read.table("Genetics/bslmm_top100_Petal_Area.param.txt",h=T,sep="\t",dec=".")
 snpeffect$snpeffect<-snpeffect$alpha+snpeffect$beta*snpeffect$gamma
 hist(snpeffect$snpeffect,breaks = 20)
-# !!!! TO DO : take into consideration the ancestry, and plot derived allele freq
-  
+# Spot allele 1 in GWAs, change sign of effect if allele 1 is not derived
+Assoc <- read.table("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_Petal_Area.assoc.txt",h=T,sep="\t",dec=".")
+snpeffect<-merge(snpeffect,Assoc[,c("rs","allele0","allele1","p_lrt")],by="rs",all.x = T,sort = F)
+ancestry <- read.table("Genetics/ADstate_Petal_Area.csv",h=T,sep=";")
+snpeffect<-merge(snpeffect,ancestry,by.x="rs",by.y="snpID",all.x=T,sort = F)
+snpeffect$snpeffect[which(!snpeffect$DER==snpeffect$allele1)]<-(-1)*snpeffect$snpeffect[which(!snpeffect$DER==snpeffect$allele1)]
+#candidates
+petal_list<-read.table("Genetics/functionnal_annotation_Petal_Area.csv",h=T,sep=",")
+candidates<-petal_list$SNP[which(petal_list$candidate=="yes")]
+# plot
+par(mar=c(3.1,1,1,1))
+a<-hist(snpeffect$snpeffect,breaks = 20,main = "",ylim=c(0,10),las=1,col = rgb(0,.7,.7),
+        yaxt="n",ylab="",xlab="")
+b<-hist(snpeffect$snpeffect[which(snpeffect$rs %in% candidates)],breaks = a$breaks,add=T,col = rgb(0,.35,.35))
+c<-hist(snpeffect$snpeffect[which(snpeffect$snpeffect > 0)],breaks = a$breaks,add=T,col = rgb(.9,.7,.2))
+d<-hist(snpeffect$snpeffect[which(snpeffect$snpeffect > 0 & snpeffect$rs %in% candidates)],breaks = a$breaks,add=T,col = rgb(.5,.4,0))
+
+for (i in 1:max(a$counts)) {
+segments(x0 = a$breaks[-length(a$breaks)],y0 = a$counts-i,x1 = a$breaks[-1],y1 = a$counts-i,col="black")
+}
+axis(side = 1,at = 0.0015,labels = "SNP total effect size",line = 1,tick = F)
+
 # 3 - Petal and fitness
+library(smatr)
+
 phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
 
 moises<-read.table("Phenotypes/rawfiles/Moises_etal_2019.csv",h=T,sep=";",dec=",")
@@ -77,17 +99,17 @@ plot(phenotypes$seeds_tuebingen ~ phenotypes$Petal_Area,las=1,
      ylab="",xlab="",xaxt="n",pch=16,col=rgb(0,.4,.4))
 axis(side = 1, at = 1:4,labels = c("","","",""))
 axis(side = 2, at = 10,labels = "Seed set (K)",tick = F,line = 1.25)
-mod<-summary(lm(phenotypes$seeds_tuebingen ~ phenotypes$Petal_Area))
+mod<-sma(phenotypes$seeds_tuebingen ~ phenotypes$Petal_Area)
 
-p<-mod$coefficients[2,4]
+p<-mod$pval[[1]]
 if(p<0.05){
-segments(x0 = min(phenotypes$Petal_Area,na.rm = T),y0 = mod$coefficients[1,1] + mod$coefficients[2,1] * min(phenotypes$Petal_Area,na.rm = T),
-         x1 = max(phenotypes$Petal_Area,na.rm = T),y1 = mod$coefficients[1,1] + mod$coefficients[2,1] * max(phenotypes$Petal_Area,na.rm = T))
+segments(x0 = min(phenotypes$Petal_Area,na.rm = T),y0 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * min(phenotypes$Petal_Area,na.rm = T),
+         x1 = max(phenotypes$Petal_Area,na.rm = T),y1 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * max(phenotypes$Petal_Area,na.rm = T))
 p<-"P-value < 0.05" }else{
 p<-paste0("P-value = ",round(p,3))
 }
-r<-round(mod$r.squared,2)
-s<-round(mod$coefficients[2,1],2)
+r<-round(mod$r2[[1]],2)
+s<-round(mod$coef[[1]][2,1],2)
 x<-par("usr")[1]+(par("usr")[2]-par("usr")[1])
 y<-par("usr")[3]+(par("usr")[4]-par("usr")[3])*.8
 text(x,y,paste0(" Slope = ",s,"\n R-squared = ",r,"\n ",p),pos=2)
@@ -99,16 +121,17 @@ par(mar=c(1,2,1,3))
 plot(phenotypes$seeds_madrid ~ phenotypes$Petal_Area,las=1,
      ylab="",xlab="",xaxt="n",pch=16,col=rgb(.8,.6,0))
 axis(side = 1, at = 1:4,labels = c("","","",""))
-mod<-summary(lm(phenotypes$seeds_madrid ~ phenotypes$Petal_Area))
-p<-mod$coefficients[2,4]
+mod<-sma(phenotypes$seeds_madrid ~ phenotypes$Petal_Area)
+
+p<-mod$pval[[1]]
 if(p<0.05){
-  segments(x0 = min(phenotypes$Petal_Area,na.rm = T),y0 = mod$coefficients[1,1] + mod$coefficients[2,1] * min(phenotypes$Petal_Area,na.rm = T),
-           x1 = max(phenotypes$Petal_Area,na.rm = T),y1 = mod$coefficients[1,1] + mod$coefficients[2,1] * max(phenotypes$Petal_Area,na.rm = T))
+  segments(x0 = min(phenotypes$Petal_Area,na.rm = T),y0 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * min(phenotypes$Petal_Area,na.rm = T),
+           x1 = max(phenotypes$Petal_Area,na.rm = T),y1 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * max(phenotypes$Petal_Area,na.rm = T))
   p<-"P-value < 0.05" }else{
     p<-paste0("P-value = ",round(p,3))
   }
-r<-round(mod$r.squared,2)
-s<-round(mod$coefficients[2,1],2)
+r<-round(mod$r2[[1]],2)
+s<-round(mod$coef[[1]][2,1],2)
 x<-par("usr")[1]+(par("usr")[2]-par("usr")[1])
 y<-par("usr")[3]+(par("usr")[4]-par("usr")[3])*.8
 text(x,y,paste0(" Slope = ",s,"\n R-squared = ",r,"\n ",p),pos=2)
@@ -123,16 +146,16 @@ plot(phenotypes$yield_sweden ~ phenotypes$Petal_Area,las=1,
 axis(side = 2, at = .3,labels = "dry seed weight (g)",tick = F,line = 1.25)
 axis(side = 1, at = 2.5,labels = expression(Petal ~ Area ~ "(" ~ mm^2 ~ ")"),tick = F,line = 1.25)
 
-mod<-summary(lm(phenotypes$yield_sweden ~ phenotypes$Petal_Area))
-p<-mod$coefficients[2,4]
+mod<-sma(phenotypes$yield_sweden ~ phenotypes$Petal_Area)
+p<-mod$pval[[1]]
 if(p<0.05){
   segments(x0 = min(phenotypes$Petal_Area,na.rm = T),y0 = mod$coefficients[1,1] + mod$coefficients[2,1] * min(phenotypes$Petal_Area,na.rm = T),
            x1 = max(phenotypes$Petal_Area,na.rm = T),y1 = mod$coefficients[1,1] + mod$coefficients[2,1] * max(phenotypes$Petal_Area,na.rm = T))
   p<-"P-value < 0.05" }else{
     p<-paste0("P-value = ",round(p,3))
   }
-r<-round(mod$r.squared,2)
-s<-round(mod$coefficients[2,1],2)
+r<-round(mod$r2[[1]],2)
+s<-round(mod$coef[[1]][2,1],2)
 x<-par("usr")[1]+(par("usr")[2]-par("usr")[1])
 y<-par("usr")[3]+(par("usr")[4]-par("usr")[3])*.8
 text(x,y,paste0(" Slope = ",s,"\n R-squared = ",r,"\n ",p),pos=2)
@@ -145,16 +168,16 @@ par(mar=c(1,2,1,3))
 plot(phenotypes$yield_spain ~ phenotypes$Petal_Area,las=1,
      ylab="",xlab="",pch=16,col=rgb(.8,.6,0))
 axis(side = 1, at = 2.5,labels = expression(Petal ~ Area ~ "(" ~ mm^2 ~ ")"),tick = F,line = 1.25)
-mod<-summary(lm(phenotypes$yield_spain ~ phenotypes$Petal_Area))
-p<-mod$coefficients[2,4]
+mod<-sma(phenotypes$yield_spain ~ phenotypes$Petal_Area)
+p<-mod$pval[[1]]
 if(p<0.05){
-  segments(x0 = min(phenotypes$Petal_Area,na.rm = T),y0 = mod$coefficients[1,1] + mod$coefficients[2,1] * min(phenotypes$Petal_Area,na.rm = T),
-           x1 = max(phenotypes$Petal_Area,na.rm = T),y1 = mod$coefficients[1,1] + mod$coefficients[2,1] * max(phenotypes$Petal_Area,na.rm = T))
+  segments(x0 = min(phenotypes$Petal_Area,na.rm = T),y0 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * min(phenotypes$Petal_Area,na.rm = T),
+           x1 = max(phenotypes$Petal_Area,na.rm = T),y1 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * max(phenotypes$Petal_Area,na.rm = T))
   p<-"P-value < 0.05" }else{
     p<-paste0("P-value = ",round(p,3))
   }
-r<-round(mod$r.squared,2)
-s<-round(mod$coefficients[2,1],2)
+r<-round(mod$r2[[1]],2)
+s<-round(mod$coef[[1]][2,1],2)
 x<-par("usr")[1]+(par("usr")[2]-par("usr")[1])
 y<-par("usr")[3]+(par("usr")[4]-par("usr")[3])*.8
 text(x,y,paste0(" Slope = ",s,"\n R-squared = ",r,"\n ",p),pos=2)
