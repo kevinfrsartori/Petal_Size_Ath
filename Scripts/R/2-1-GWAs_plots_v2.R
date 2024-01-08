@@ -352,6 +352,12 @@ top100<-order(Assoc$Manhattan,decreasing = T)[1:100]
 palette(c(rgb(0,.5,.5,1),rgb(0,.8,.8,1),rgb(0,.6,.6,1),rgb(0,.9,.9,1),rgb(0,.7,.7,1)))
 points(Assoc$pos[top100],Assoc$Manhattan[top100],cex=0.75,pch=16,col=Assoc$chr[top100])
 
+# Plot top 100 for fig 2C
+par(mar=c(0,0,0,0),oma=c(0,0,0,0))
+plot(Assoc$pos[top100],Assoc$Manhattan[top100],
+     cex=2,pch=16,col=Assoc$chr[top100],xaxt="n", yaxt="n",bty="n",ylab="",xlab="")
+
+
 # All traits Manhattan plots
 
 par(mfrow=c(6,1),mar=c(1,3,0,.2),oma=c(4,0,0,0))
