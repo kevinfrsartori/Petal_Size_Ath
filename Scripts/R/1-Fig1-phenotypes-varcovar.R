@@ -50,10 +50,18 @@ for(i in 1:length(res.pca$var$coord[,1])){
   arrows(0, 0, res.pca$var$coord[i,1], res.pca$var$coord[i,2], lwd=2, length = 0.1,angle = 20,col="black")
   text(res.pca$var$coord[i,1], res.pca$var$coord[i,2],gsub(pattern = "_",replacement = " ", rownames(res.pca$var$coord))[i],pos=sign(res.pca$var$coord[i,1])+3,col="black")
 }
+# quanti sup: flowering time
+res.pca$quanti.sup$coord<-res.pca$quanti.sup$coord*5
+arrows(0, 0, res.pca$quanti.sup$coord[1,1], res.pca$quanti.sup$coord[1,2], lty=2, lwd=2, length = 0.1,angle = 20,col="grey20")
+text(res.pca$quanti.sup$coord[1,1], res.pca$quanti.sup$coord[1,2],gsub(pattern = "_",replacement = " ", rownames(res.pca$quanti.sup$coord))[1],pos=sign(res.pca$quanti.sup$coord[1,1])+3,col="grey20")
 
 #axes
 axis(side = 1,at = c(-5,0,5),labels = c(-5,0,5))
 axis(side = 2,at = c(-5,0,5),labels = c(-5,0,5))
+
+# pairwise correlation with flowering time
+summary(lm(datapca$Ovule_Number ~ datapca$flowering_time))
+# TO DO make table with H2 etc
 
 
 # Fig1.B - phenotypes allometry 650 x 600
