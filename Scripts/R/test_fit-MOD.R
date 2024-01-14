@@ -52,13 +52,19 @@ summary(lm(Seeds_log ~ site * water + Petal_Area, data = modmoises))
 modmoises$treatment<-as.factor(paste0(modmoises$site,"_",modmoises$water,"w"))
 mod<-summary(lm(Seeds_log ~ treatment * Petal_Area, data = modmoises))
 mod
-opt_gro<-mod$coefficients[1:4,1]
+opt_gro<-c(mod$coefficients[1,1],mod$coefficients[1,1]+mod$coefficients[2:4,1])
 slope<-c(mod$coefficients[5,1],mod$coefficients[5,1]+mod$coefficients[6:8,1])
 plot(slope ~ opt_gro)
 
-opt_gro<-tapply(modmoises$Seeds_log, INDEX = modmoises$treatment, FUN = mean, na.rm=T)
-plot(slope ~ opt_gro)
+#opt_gro<-tapply(modmoises$Seeds_log, INDEX = modmoises$treatment, FUN = median, na.rm=T)
+#plot(slope ~ opt_gro)
 
+#nlm
+mod<-summary(lme4::lmer(Seeds_log ~ treatment * Petal_Area + (1|id), data = modmoises))
+mod$coefficients
+opt_gro<-c(mod$coefficients[1,1],mod$coefficients[1,1]+mod$coefficients[2:4,1])
+slope<-c(mod$coefficients[5,1],mod$coefficients[5,1]+mod$coefficients[6:8,1])
+plot(slope ~ opt_gro)
 
 # Li et al
 phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
@@ -85,23 +91,30 @@ lietal.sw.2nd$exp<-"2nd"
 modlietal<-rbind(lietal.sp.1st,lietal.sp.2nd,lietal.sw.1st,lietal.sw.2nd)
 
 modlietal<-na.omit(merge(modlietal,phenotypes[,c("Genotype","Petal_Area")],by.x = "accession_id", by.y = "Genotype",all.x = T))
+#keepacc<-table(modlietal$accession_id)
+#modlietal<-modlietal[which(modlietal$accession_id %in% names(keepacc)[which(keepacc>2)]),]
 
-modlietal$yield_log<-log(modlietal$yield)
+
+modlietal$yield_log<-log10(modlietal$yield*1000)
+hist(modlietal$yield_log)
 which(modlietal$yield_log %in% c(Inf,-Inf))
 summary(lm(yield_log ~ country * exp + Petal_Area, data = modlietal))
-hist(modlietal$yield_log)
 modlietal$treatment<-as.factor(paste0(modlietal$country,"_",modlietal$exp))
-mod<-summary(lm(yield_log ~ 0 + treatment * Petal_Area, data = modlietal))
-mod
+(mod<-summary(lm(yield_log ~ 0 + treatment * Petal_Area, data = modlietal)))
+
 opt_gro<-mod$coefficients[1:4,1]
 slope<-c(mod$coefficients[5,1],mod$coefficients[5,1]+mod$coefficients[6:8,1])
 plot(slope ~ opt_gro)
-plot(modlietal$yield_log ~ modlietal$Petal_Area, col=modlietal$treatment,pch=16)
 
-opt_gro<-tapply(modlietal$yield_log, INDEX = modlietal$treatment, FUN = mean)
+opt_gro<-tapply(modlietal$yield_log, INDEX = modlietal$treatments)
 plot(slope ~ opt_gro)
 
-
+#nlm
+mod<-(summary(lme4::lmer(yield ~ treatment * Petal_Area + (1|accession_id), data = modlietal)))
+mod$coefficients
+opt_gro<-c(mod$coefficients[1,1],mod$coefficients[1,1]+mod$coefficients[2:4,1])
+slope<-c(mod$coefficients[5,1],mod$coefficients[5,1]+mod$coefficients[6:8,1])
+plot(slope ~ opt_gro)
 
 #Wilczek
 phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
@@ -150,10 +163,12 @@ plot(modWilczek$Fitness ~ modWilczek$Petal_Area, col=modWilczek$country,pch=16)
 opt_gro<-tapply(modWilczek$Fitness, INDEX = modWilczek$country, FUN = mean)
 plot(slope ~ opt_gro)
 
-
-
-
-
+#nlm
+(mod<-(summary(lme4::lmer(Fitness ~ country * Petal_Area + (1|idAccession), data = modWilczek))))
+mod$coefficients
+opt_gro<-c(mod$coefficients[1,1],mod$coefficients[1,1]+mod$coefficients[2:5,1])
+slope<-c(mod$coefficients[6,1],mod$coefficients[6,1]+mod$coefficients[7:10,1])
+plot(slope ~ opt_gro)
 
 
 colnames(phenotypes)[dim(phenotypes)[2]]<-"yield_spain_1st"
@@ -370,3 +385,13 @@ mout<-Moutlier(Wilczek[,-1],quantile =0.95, plot=T)
 outliers<-as.vector(which(mout$md>mout$cutoff))
 outliers<-as.vector(which(mout$rd>mout$cutoff))
 Wilczek<-Wilczek[-outliers,]
+
+
+trAsh
+# keep only if 4 replicates
+modmoisesna<-na.omit(modmoises)
+keepacc<-table(modmoisesna$id)
+
+
+modmoisesna<-modmoisesna[which(modmoisesna$id %in% names(keepacc)[which(keepacc>2)]),]
+summary(lme4::lmer(Seeds_log ~ treatment * Petal_Area + (1|id), data = modmoisesna))

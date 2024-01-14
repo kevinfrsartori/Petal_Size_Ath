@@ -95,191 +95,156 @@ text(-4.2,-.2+0.02,"10 relevant genes",pos=4)
 
 
 # 3c - Petal and fitness 700 x 500
-#-----------------------
+#---------------------------------
 
-library(smatr)
-
+# Moises et al 2019 data
 phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
-
 moises<-read.table("Phenotypes/rawfiles/Moises_etal_2019.csv",h=T,sep=";",dec=",")
-moises<-moises[which(moises$indpop=="i"),]
-moises<-moises[which(moises$water=="h"),]
-moises.m<-moises[which(moises$site=="madrid"),]
-# zero value for fitness seems to be a mistake
-moises.m$Fitness[which(moises.m$Fitness==0)]<-NA
-moises.t<-moises[which(moises$site=="tuebingen"),]
-which(duplicated(moises.m$id))
-which(duplicated(moises.t$id))
+modmoises<-na.omit(merge(moises[,c("id","site","water","Seeds")],phenotypes[,c("Genotype","Petal_Area")],by.x="id",by.y="Genotype",all.x=T))
+modmoises$Seeds_log<-log10(modmoises$Seeds)
+which(modmoises$Seeds_log %in% c(Inf,-Inf))
+modmoises$treatment<-as.factor(paste0(modmoises$site,"_",modmoises$water,"w"))
+rm(moises)
+# LME moises
+mod<-summary(nlme::lme(Seeds_log ~ treatment + Petal_Area, random=~1|id, data = modmoises))
+anova(mod)
 
-lietal<-read.table("Phenotypes/rawfiles/Li.et.al.2010.csv",h=T,sep=",",dec=".")
+#LMER
+mod<-lme4::lmer(Seeds_log ~ 0 + treatment * Petal_Area + (1|id), data = modmoises)
+summod<-summary(mod)
+summod$coefficients
 
-phenotypes<-merge(phenotypes,moises.m[,c("id","Fitness")],by.x = "Genotype", by.y = "id",all.x = T)
-colnames(phenotypes)[dim(phenotypes)[2]]<-"seeds_madrid"
-phenotypes<-merge(phenotypes,moises.t[,c("id","Fitness")],by.x = "Genotype", by.y = "id",all.x = T)
-colnames(phenotypes)[dim(phenotypes)[2]]<-"seeds_tuebingen"
-phenotypes<-merge(phenotypes,lietal[,c("accession_id","Yield.spain.2009..1st.experiment.")],by.x = "Genotype", by.y = "accession_id",all.x = T)
-colnames(phenotypes)[dim(phenotypes)[2]]<-"yield_spain"
-phenotypes<-merge(phenotypes,lietal[,c("accession_id","Yield.sweden.2009..1st.experiment.")],by.x = "Genotype", by.y = "accession_id",all.x = T)
-colnames(phenotypes)[dim(phenotypes)[2]]<-"yield_sweden"
-phenotypes$seeds_madrid<-phenotypes$seeds_madrid/1000
-phenotypes$seeds_tuebingen<-phenotypes$seeds_tuebingen/1000
+# plot slopes
+par(mar=c(5,5,0,0),oma=c(.5,.5,.5,.5))
+opt_gro<-summod$coefficients[1:4,1]
+slope<-c(summod$coefficients[5,1],summod$coefficients[5,1]+summod$coefficients[6:8,1])
+sdslope<-c(summod$coefficients[5:8,2])
+plot(slope,opt_gro,las=1,ylim=c(3.4,4.5),xlim=c(-.3,.05),pch=".",
+     ylab="Growing conditions optimality\n(experiment's average fitness)",
+     xlab="Fitness ~ Petal area slope")
+abline(v=0,lwd=2,col="grey",lty=2)
+segments(x0 = slope-sdslope, y0 = opt_gro, x1 = slope+sdslope, y1 = opt_gro, col = "black")
+points(slope, opt_gro, pch=16,col="blue")
 
-hscol<-colorRampPalette(rev(viridis::inferno(4)))
-
-par(oma=c(3,1,1,1),mfrow=c(2,2))
-# tuebingen
-par(mar=c(1,4,1,1))
-
-plot(phenotypes$seeds_tuebingen ~ phenotypes$Petal_Area,las=1,
-     ylab="",xlab="",xaxt="n",pch=16,col=hscol(100)[62])
-axis(side = 1, at = 1:4,labels = c("","","",""))
-axis(side = 2, at = 10,labels = "Seed set (K)",tick = F,line = 1.25)
-mod<-sma(phenotypes$seeds_tuebingen ~ phenotypes$Petal_Area)
-
-p<-mod$pval[[1]]
-if(p<0.05){
-segments(x0 = min(phenotypes$Petal_Area,na.rm = T),y0 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * min(phenotypes$Petal_Area,na.rm = T),
-         x1 = max(phenotypes$Petal_Area,na.rm = T),y1 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * max(phenotypes$Petal_Area,na.rm = T))
-p<-"P-value < 0.05" }else{
-p<-paste0("P-value = ",round(p,3))
-}
-r<-round(mod$r2[[1]],2)
-s<-round(mod$coef[[1]][2,1],2)
-x<-par("usr")[1]+(par("usr")[2]-par("usr")[1])
-y<-par("usr")[3]+(par("usr")[4]-par("usr")[3])*.8
-text(x,y,paste0(" Slope = ",s,"\n R-squared = ",r,"\n ",p),pos=2)
-
-title(main = "Tuebingen - HS=0.62",)
-
-#madrid
-par(mar=c(1,2,1,3))
-plot(phenotypes$seeds_madrid ~ phenotypes$Petal_Area,las=1,
-     ylab="",xlab="",xaxt="n",pch=16,col=hscol(100)[52])
-axis(side = 1, at = 1:4,labels = c("","","",""))
-mod<-sma(phenotypes$seeds_madrid ~ phenotypes$Petal_Area)
-
-p<-mod$pval[[1]]
-if(p<0.05){
-  segments(x0 = min(phenotypes$Petal_Area,na.rm = T),y0 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * min(phenotypes$Petal_Area,na.rm = T),
-           x1 = max(phenotypes$Petal_Area,na.rm = T),y1 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * max(phenotypes$Petal_Area,na.rm = T))
-  p<-"P-value < 0.05" }else{
-    p<-paste0("P-value = ",round(p,3))
-  }
-r<-round(mod$r2[[1]],2)
-s<-round(mod$coef[[1]][2,1],2)
-x<-par("usr")[1]+(par("usr")[2]-par("usr")[1])
-y<-par("usr")[3]+(par("usr")[4]-par("usr")[3])*.8
-text(x,y,paste0(" Slope = ",s,"\n R-squared = ",r,"\n ",p),pos=2)
-
-title(main = "Madrid - HS=0.52")
-
-#sweden
-par(mar=c(1,4,1,1))
-
-plot(phenotypes$yield_sweden ~ phenotypes$Petal_Area,las=1,
-     ylab="",xlab="",pch=16,col=hscol(100)[67])
-axis(side = 2, at = .3,labels = "dry seed weight (g)",tick = F,line = 1.25)
-axis(side = 1, at = 2.5,labels = expression(Petal ~ Area ~ "(" ~ mm^2 ~ ")"),tick = F,line = 1.25)
-
-mod<-sma(phenotypes$yield_sweden ~ phenotypes$Petal_Area)
-p<-mod$pval[[1]]
-if(p<0.05){
-  segments(x0 = min(phenotypes$Petal_Area,na.rm = T),y0 = mod$coefficients[1,1] + mod$coefficients[2,1] * min(phenotypes$Petal_Area,na.rm = T),
-           x1 = max(phenotypes$Petal_Area,na.rm = T),y1 = mod$coefficients[1,1] + mod$coefficients[2,1] * max(phenotypes$Petal_Area,na.rm = T))
-  p<-"P-value < 0.05" }else{
-    p<-paste0("P-value = ",round(p,3))
-  }
-r<-round(mod$r2[[1]],2)
-s<-round(mod$coef[[1]][2,1],2)
-x<-par("usr")[1]+(par("usr")[2]-par("usr")[1])
-y<-par("usr")[3]+(par("usr")[4]-par("usr")[3])*.8
-text(x,y,paste0(" Slope = ",s,"\n R-squared = ",r,"\n ",p),pos=2)
-
-title(main = "Sweden - HS=0.67")
-
-#spain
-par(mar=c(1,2,1,3))
-
-plot(phenotypes$yield_spain ~ phenotypes$Petal_Area,las=1,
-     ylab="",xlab="",pch=16,col=hscol(100)[43])
-axis(side = 1, at = 2.5,labels = expression(Petal ~ Area ~ "(" ~ mm^2 ~ ")"),tick = F,line = 1.25)
-mod<-sma(phenotypes$yield_spain ~ phenotypes$Petal_Area)
-p<-mod$pval[[1]]
-if(p<0.05){
-  segments(x0 = min(phenotypes$Petal_Area,na.rm = T),y0 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * min(phenotypes$Petal_Area,na.rm = T),
-           x1 = max(phenotypes$Petal_Area,na.rm = T),y1 = mod$coef[[1]][1,1] + mod$coef[[1]][2,1] * max(phenotypes$Petal_Area,na.rm = T))
-  p<-"P-value < 0.05" }else{
-    p<-paste0("P-value = ",round(p,3))
-  }
-r<-round(mod$r2[[1]],2)
-s<-round(mod$coef[[1]][2,1],2)
-x<-par("usr")[1]+(par("usr")[2]-par("usr")[1])
-y<-par("usr")[3]+(par("usr")[4]-par("usr")[3])*.8
-text(x,y,paste0(" Slope = ",s,"\n R-squared = ",r,"\n ",p),pos=2)
-
-title(main = "Spain - HS=0.43")
-
-
-#Wilczek
+# Wilczek et al 2014
+phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
 Wilczek<-read.table("Phenotypes/rawfiles/Wilczek.et.al.2014.csv",h=T,sep=",")
-Wilczek$Stock.Number<-gsub(pattern = "cs", replacement = "CS", x = Wilczek$Stock.Number)
 g1001acc<-read.table("Phenotypes/rawfiles/FullList1001g.csv",h=T,sep=";")
 Wilczek<-merge(Wilczek, g1001acc[,c(1,2)], by.x="Accession.Abbreviation", by.y="name",all.x=T)
-Wilczek<-Wilczek[,c("idAccession",grep("Fitness",colnames(Wilczek),value = T))]
-phenotypes<-merge(phenotypes,Wilczek,by.x = "Genotype", by.y = "idAccession",all.x = T)
+Wilczek<-Wilczek[,c("idAccession",grep("Fitness",colnames(Wilczek),value = T)[1:5])]
 
-# Norwich
-plot(phenotypes$Petal_Area, phenotypes$Fitness.in.Norwich.Autumn,pch=16,col="orange")
-points(phenotypes$Petal_Area, phenotypes$Fitness.in.Norwich.Spring,pch=16,col="green")
-points(phenotypes$Petal_Area, phenotypes$Fitness.in.Norwich.Summer,pch=16,col="red")
+Wilczek_fitness<-log10(as.matrix(Wilczek[,grep("Fitness",colnames(Wilczek),value = T)]))
+#hist(Wilczek_fitness)
+Wilczek_fitness[which(Wilczek_fitness %in% c(Inf,-Inf))]<-NA
+Wilczek[,-1]<-Wilczek_fitness
 
-summary(lm(phenotypes$Fitness.in.Norwich.Autumn ~ phenotypes$Petal_Area))
-sma(phenotypes$Fitness.in.Norwich.Spring ~ phenotypes$Petal_Area)
-sma(phenotypes$Fitness.in.Norwich.Summer ~ phenotypes$Petal_Area)
+Wilczek_NorAut<-na.omit(Wilczek[,c("idAccession","Fitness.in.Norwich.Autumn")])
+colnames(Wilczek_NorAut)[2]<-"Fitness"
+Wilczek_NorAut$country<-"Norwich.Autumn"
 
-which(phenotypes$Fitness.in.Halle.Autumn > 70000)
-which(phenotypes$Petal_Area > 4)
-phenotypes$Fitness.in.Halle.Autumn[238]<-NA
-plot(phenotypes$Petal_Area, phenotypes$Fitness.in.Halle.Autumn)
-summary(lm(phenotypes$Fitness.in.Halle.Autumn ~ phenotypes$Petal_Area))
+Wilczek_HalAut<-na.omit(Wilczek[,c("idAccession","Fitness.in.Halle.Autumn")])
+colnames(Wilczek_HalAut)[2]<-"Fitness"
+Wilczek_HalAut$country<-"Halle.Autumn"
 
-plot(phenotypes$Petal_Area, phenotypes$Fitness.in.Valencia.Autumn)
-summary(lm(phenotypes$Fitness.in.Valencia.Autumn ~ phenotypes$Petal_Area))
+Wilczek_ValAut<-na.omit(Wilczek[,c("idAccession","Fitness.in.Valencia.Autumn")])
+colnames(Wilczek_ValAut)[2]<-"Fitness"
+Wilczek_ValAut$country<-"Valencia.Autumn"
+
+Wilczek_NorSpr<-na.omit(Wilczek[,c("idAccession","Fitness.in.Norwich.Spring")])
+colnames(Wilczek_NorSpr)[2]<-"Fitness"
+Wilczek_NorSpr$country<-"Norwich.Spring"
+
+Wilczek_NorSum<-na.omit(Wilczek[,c("idAccession","Fitness.in.Norwich.Summer")])
+colnames(Wilczek_NorSum)[2]<-"Fitness"
+Wilczek_NorSum$country<-"Norwich.Summer"
+
+modWilczek<-rbind(Wilczek_NorAut,Wilczek_HalAut,Wilczek_ValAut,Wilczek_NorSpr,Wilczek_NorSum)
+modWilczek$country<-as.factor(modWilczek$country)
+modWilczek<-na.omit(merge(modWilczek,phenotypes[,c("Genotype","Petal_Area")],by.x = "idAccession", by.y = "Genotype",all.x = T))
+rm(g1001acc,Wilczek,Wilczek_fitness,Wilczek_NorSum,Wilczek_NorSpr,Wilczek_NorAut,Wilczek_HalAut,Wilczek_ValAut)
+# LME
+mod<-summary(nlme::lme(Fitness ~ Petal_Area, random=~1|idAccession, data = modWilczek))
+anova(mod)
+
+# LMER
+mod<-lme4::lmer(Fitness ~ 0 + country * Petal_Area + (1|idAccession), data = modWilczek)
+summod<-summary(mod)
+summod$coefficients
+
+# plot slopes
+opt_gro<-summod$coefficients[1:5,1]
+slope<-c(summod$coefficients[6,1],summod$coefficients[6,1]+summod$coefficients[7:10,1])
+sdslope<-c(summod$coefficients[6,2],summod$coefficients[7:10,2])
+segments(x0 = slope-sdslope, y0 = opt_gro, x1 = slope+sdslope, y1 = opt_gro, col = "black")
+points(slope, opt_gro, pch=16,col="red")
+
+# Przybylska et al. 2023
+Przybylska<-read.table("Phenotypes/rawfiles/phenotypic_datarecord.txt",h=T,sep="\t",dec=",")
+Przybylska$X1001g_ID<-as.factor(Przybylska$X1001g_ID)
+traits<-levels(as.factor(Przybylska$traitName))
+accessions<-levels(as.factor(Przybylska$X1001g_ID))
+modprzy<-na.omit(Przybylska[which(Przybylska$traitName=="fruit number"),c("X1001g_ID","traitValue","HerbivoryIndex")])
+modprzy<-na.omit(merge(modprzy,phenotypes[,c("Genotype","Petal_Area")],by.x="X1001g_ID",by.y="Genotype",all.x=T))
+modprzy$HerbivoryIndex<-as.factor(modprzy$HerbivoryIndex)
+modprzy$fitness<-log10(modprzy$traitValue*28.3)
+rm(Przybylska)
+#LME
+mod<-nlme::lme(fitness ~ Petal_Area + HerbivoryIndex, random=~1|X1001g_ID, data = modprzy)
+summod<-summary(mod)
+anova(mod)
+#plot(modprzy$fitness ~ modprzy$HerbivoryIndex)
+#table(modprzy$HerbivoryIndex)
+
+# LMER
+mod<-lme4::lmer(fitness ~ Petal_Area + HerbivoryIndex + (1|X1001g_ID), data = modprzy)
+summod<-summary(mod)
+summod$coefficients
+opt_gro<-summod$coefficients[1,1]
+slope<-summod$coefficients[2,1]
+points(slope, opt_gro, pch=16,col="grey")
+
+# herbivory 2016
+h2016<-read.csv2("Phenotypes/rawfiles/Manip_Arabidopsis_Herbivory_data_BRUT_060916_final_1-ligne-par-pot.csv",
+                 h=T,dec=",",sep=";",stringsAsFactors=FALSE, fileEncoding="latin1",na.strings = ".")
+h2016<-na.omit(h2016[,c("Bloc","Treatment","Accession_ID","NbSiliquePlante")])
+h2016<-h2016[-which(h2016$Bloc=="A"),]
+modh2016<-na.omit(merge(h2016,phenotypes[,c("Genotype","Petal_Area")],by.x = "Accession_ID", by.y = "Genotype",all.x = T))
+modh2016$fitness<-log10(modh2016$NbSiliquePlante*28.3)
+rm(h2016)
+# LME
+mod<-nlme::lme(fitness ~ Petal_Area * Treatment + Bloc, random=~1|Accession_ID, data = modh2016)
+summod<-summary(mod)
+anova(mod)
+# LMER
+mod<-lme4::lmer(fitness ~ 0 + Treatment * Petal_Area + Bloc + (1|Accession_ID), data = modh2016)
+summod<-summary(mod)
+summod$coefficients
+opt_gro<-summod$coefficients[1:2,1]
+slope<-c(summod$coefficients[3,1],summod$coefficients[3,1]+summod$coefficients[6,1])
+sdslope<-c(summod$coefficients[3,2],summod$coefficients[6,2])
+segments(x0 = slope-sdslope, y0 = opt_gro, x1 = slope+sdslope, y1 = opt_gro, col = "black")
+points(slope, opt_gro, pch=16,col="green")
+
+#vasseur 2018
+V2018<-read.table("Phenotypes/rawfiles/Vasseur2018.csv",sep=",",h=T)
+V2018<-na.omit(V2018[,c("idAccession","FruitNumber")])
+modV2018<-na.omit(merge(V2018,phenotypes[,c("Genotype","Petal_Area")],by.x = "idAccession", by.y = "Genotype",all.x = T))
+modV2018$fitness<-log10(modV2018$FruitNumber*28.3)
+# LME
+mod<-nlme::lme(fitness ~ Petal_Area, random=~1|idAccession, data = modV2018)
+summod<-summary(mod)
+anova(mod)
+# LMER
+mod<-lme4::lmer(fitness ~ Petal_Area + (1|idAccession), data = modV2018)
+summod<-summary(mod)
+summod$coefficients
+opt_gro<-summod$coefficients[1,1]
+slope<-summod$coefficients[2,1]
+sdslope<-c(summod$coefficients[2,2])
+segments(x0 = slope-sdslope, y0 = opt_gro, x1 = slope+sdslope, y1 = opt_gro, col = "black")
+points(slope, opt_gro, pch=16,col="orange")
 
 
-# not enough data for the rest of the dataset
-#plot(phenotypes$Petal_Area, phenotypes$Fitness.in.Oulu.Autumn)
-#plot(phenotypes$Petal_Area, phenotypes$Fitness.in.Halle.2007)
-#plot(phenotypes$Petal_Area, phenotypes$Fitness.in.Valencia.2007)
 
 
-# try with modelisation
-phenotypes$Genotype<-as.factor(phenotypes$Genotype)
 
-mad<-na.omit(phenotypes[,c("Genotype","seeds_madrid","Petal_Area")])
-colnames(mad)[2]<-"fitness"
-mad$site<-"madrid"
-mad$exp<-1
-
-tub<-na.omit(phenotypes[,c("Genotype","seeds_tuebingen","Petal_Area")])
-colnames(tub)[2]<-"fitness"
-tub$site<-"tuebingen"
-tub$exp<-1
-
-spa<-na.omit(phenotypes[,c("Genotype","yield_spain","Petal_Area")])
-colnames(spa)[2]<-"fitness"
-spa$site<-"spain"
-spa$exp<-2
-
-swe<-na.omit(phenotypes[,c("Genotype","yield_sweden","Petal_Area")])
-colnames(swe)[2]<-"fitness"
-swe$site<-"sweden"
-swe$exp<-2
-
-newdata<-droplevels(rbind(mad,tub))
-newdata$exp<-as.factor(newdata$exp)
-
-summary(lm(fitness ~ Petal_Area + exp + site, data = newdata))
-
-lme4::lmer(fitness ~ Petal_Area * site + (1|Genotype), data = newdata)
-summary(lme4::lmer(fitness ~ Petal_Area * site + (1|Genotype), data = newdata))
