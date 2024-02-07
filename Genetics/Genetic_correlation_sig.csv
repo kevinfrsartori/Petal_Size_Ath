@@ -1,0 +1,9 @@
+;Ovule_Number;Long_Stamens;Petal_Area;Sepal_Area;Leaf_Area;leaf.area.per.leaf.dry.mass;leaf.nitrogen.content.per.leaf.dry.mass;whole.plant.dry.mass
+Ovule_Number;;-0.3;-0.15;-0.14;-0.41;0.39;0.43;-0.51
+Long_Stamens;NS;;0.57;0.64;-0.53;-0.42;-0.17;0.28
+Petal_Area;NS;NS;;0.86;-0.43;-0.23;-0.37;0.33
+Sepal_Area;NS;NS;NS;;-0.4;-0.15;-0.17;0.23
+Leaf_Area;NS;NS;NS;NS;;-0.14;-0.29;0.39
+leaf.area.per.leaf.dry.mass;<0.01***;NS;NS;NS;NS;;0.9;-0.92
+leaf.nitrogen.content.per.leaf.dry.mass;<0.01***;NS;<0.01***;<0.01***;NS;<0.01***;;-0.96
+whole.plant.dry.mass;NS;NS;<0.01***;<0.01***;NS;<0.01***;<0.01***;
