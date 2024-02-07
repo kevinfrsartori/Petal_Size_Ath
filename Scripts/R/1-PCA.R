@@ -39,7 +39,7 @@ barplot(c(res.pca$var$cor[,1],res.pca$quanti.sup$cor[,1]),
 
 axis(side = 3,at = c(0,.5,1), labels = c("","",""),line = 0)
 axis(side = 3,at = c(0,.5,1), labels = c("0",".5","1"),line = -.5,cex.axis=.75,tick = F)
-axis(side = 3,at = c(.25), labels = c(paste0("PC1 - ",round(res.pca$eig[1,2],1),"%")),line = 0,cex.axis=1,tick = F)
+axis(side = 3,at = .5, labels = c(paste0("Trait correlation with PC1 (",round(res.pca$eig[1,2],1),"% var.)")),line = 0,cex.axis=1,tick = F)
 
 X<-c(res.pca$var$cor[,1],res.pca$quanti.sup$cor[,1])
 X[which(X<0)]<-0
@@ -54,12 +54,12 @@ barplot(c(res.pca$var$cor[,2],res.pca$quanti.sup$cor[,2]),
         xaxt="n",yaxt="n",ylim=c(-.2,1.2),space=0,col=colors)
 axis(side = 2,at = c(0,.5,1), labels = c("","",""),line = 0)
 axis(side = 2,at = c(0,.5,1), labels = c("0",".5","1"),line = -.5,cex.axis=.75,tick = F,las=1)
-axis(side = 2,at = c(.25), labels = c(paste0("PC2 - ",round(res.pca$eig[2,2],1),"%")),line = 0,cex.axis=1,tick = F)
+axis(side = 2,at = .5, labels = c(paste0("Trait correlation with PC2 (",round(res.pca$eig[2,2],1),"% var.)")),line = 0,cex.axis=1,tick = F)
 Y<-c(res.pca$var$cor[,2],res.pca$quanti.sup$cor[,2])
 Y[which(Y<0)]<-0
 text(y = Y,x= (0:12),labels = lett,pos = 4,cex = .75,srt=90)
 
-### Custom PCA - save at size 800x800
+### Custom PCA 
 library(plotrix)
 par(mar=c(0,0,0,0))
 plot(0,0,xlim=c(-5.2,5.2),ylim=c(-5.2,5.2),pch=3,frame.plot = F,xlab = paste0("PC1 ",round(res.pca$eig[1,2],2),"%"),
@@ -82,8 +82,7 @@ points(res.pca$ind$coord[,1], res.pca$ind$coord[,2],col=rgb(0,.4,.4,.5),pch=16,c
 text(x = -2.5,y = -.3,labels = "PC1",pos=3)
 text(x = 0,y = -2.5,labels = "PC2",pos=2,srt=90)
 
-# pairwise correlation with flowering time
-summary(lm(datapca$Ovule_Number ~ datapca$flowering_time))
+
 # TO DO make table with H2 etc
 
 
@@ -165,3 +164,85 @@ text(1,smamod$coef[[1]][1,1]+smamod$coef[[1]][2,1],"Sep ~ Pet (W)",pos=4)
 
 
 
+# Correlation with other traits
+
+#this study
+phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)[,c(1,5:16,22)]
+names(phenotypes)[2]<-"Ovule_Number"
+
+# 107 pheno
+pheno107<-read.table("Phenotypes/rawfiles/phenotypes107_gmeans.csv",h=T,sep=",")
+
+# Przybylska
+Przybylska<-read.table("Phenotypes/rawfiles/phenotypic_datarecord.txt",h=T,sep="\t",dec=",")
+Przybylska$X1001g_ID<-as.factor(Przybylska$X1001g_ID)
+traits<-levels(as.factor(Przybylska$traitName))
+accessions<-levels(as.factor(Przybylska$X1001g_ID))
+dataset<-data.frame(matrix(data = NA,nrow = length(accessions),ncol = length(traits)+1,dimnames = list(accessions,c(traits,"accession_name"))))
+dataset$accession_name<-accessions
+for (i in 1:length(traits)) {
+  dataset.t<-na.omit(Przybylska[which(Przybylska$traitName==traits[i]),c(2,8,9)])
+  dataset[,i]<-as.numeric(tapply(X = dataset.t$traitValue, INDEX = dataset.t$X1001g_ID,FUN = mean))
+}
+rm(Przybylska,dataset.t)
+
+# merge
+btw1<-merge(phenotypes,pheno107,by.x="Genotype",by.y="accession_id",all.x=T)
+btw2<-merge(phenotypes,dataset,by.x="Genotype",by.y="accession_name",all.x=T)
+
+# Correlation within
+library(corrgram)
+corrgram(btw1[,2:14], order=NULL, lower.panel=panel.shade, upper.panel=NULL, text.panel=panel.txt, main="Within this study")
+cormat<-cor(btw1[,2:14],use = "pairwise.complete.obs")
+range(cormat[-which(cormat==1)],na.rm = T)
+# significance within
+#install.packages("Hmisc")
+library("Hmisc")
+wt_t<-0.05/length(2:14)
+sigmat<-rcorr(as.matrix(btw1[,2:14]))
+sigwt<-sigmat$P
+cormat[which(sigwt<wt_t)]
+cormat[-which(sigwt<wt_t)]<-"NS"
+range(cormat[-which(cormat=="NS")],na.rm = T)
+
+write.csv2(cormat,file = "Phenotypes/Within_this_study_correlation.csv",quote = F,row.names = T)
+
+# Correlations btw1
+library(corrgram)
+corrgram(btw1[,-1], order=NULL, lower.panel=panel.shade, upper.panel=NULL, text.panel=panel.txt, main="This study versus Przybylska")
+cormat<-cor(btw1[,-1],use = "pairwise.complete.obs")
+corbtw1<-cormat[14:120,1:13]
+range(corbtw1,na.rm = T)
+corbtw1_wo_ft<-cormat[14:120,1:12]
+range(corbtw1_wo_ft,na.rm = T)
+# significance btw1
+btw1_t<-0.05/(length(14:120)*length(1:13))
+
+sigmat<-rcorr(as.matrix(btw1[,-1]))
+sigbtw1<-sigmat$P[14:120,1:13]
+corbtw1[which(sigbtw1<btw1_t)]
+corbtw1[-which(sigbtw1<btw1_t)]<-"NS"
+range(corbtw1[-which(corbtw1=="NS")],na.rm = T)
+
+write.csv2(corbtw1,file = "Phenotypes/With_107pheno_correlation.csv",quote = F,row.names = T)
+
+
+# Correlations btw2
+library(corrgram)
+corrgram(btw2[,-1], order=NULL, lower.panel=panel.shade, upper.panel=NULL, text.panel=panel.txt, main="This study versus 107 phenotypes")
+cormat<-cor(btw2[,-1],use = "pairwise.complete.obs")
+corbtw2<-cormat[14:29,1:13]
+range(corbtw2,na.rm = T)
+corbtw2_wo_ft<-cormat[14:29,1:12]
+range(corbtw2_wo_ft,na.rm = T)
+
+# significance btw2
+btw2_t<-0.05/(length(14:29)*length(1:13))
+sigmat<-rcorr(as.matrix(btw2[,-1]))
+sigbtw2<-sigmat$P[14:29,1:13]
+corbtw2[which(sigbtw2<btw2_t)]
+corbtw2[-which(sigbtw2<btw2_t)]<-"NS"
+range(corbtw2[-which(corbtw2=="NS")],na.rm = T)
+range(corbtw2[,-13][-which(corbtw2=="NS")],na.rm = T)
+
+write.csv2(corbtw2,file = "Phenotypes/With_Przybylska_correlation.csv",quote = F,row.names = T)

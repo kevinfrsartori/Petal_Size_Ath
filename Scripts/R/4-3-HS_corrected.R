@@ -213,7 +213,7 @@ axis(side = 1, at = seq(0,88,11)+6, labels = paste0("<",substr(seq(.1,.5,.05),2,
 # allele 0 versus 1 recovered from glm data
 assoc<-read.table("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_Petal_Area.assoc.txt",h=T,sep="\t",dec=".")
 # effect recovered from bslmm
-snpeffect <- read.table("Genetics/bslmm_top100_Petal_Area.param.txt",h=T,sep="\t",dec=".")
+snpeffect <- read.table("Genetics/bslmm_flct_Petal_Area.param.txt",h=T,sep="\t",dec=".")
 snpeffect$snpeffect<-snpeffect$alpha+snpeffect$beta*snpeffect$gamma
 snpeffect<-merge(snpeffect,assoc[,c(2,5,6)],by="rs",all.x=T)
 # define "large petal allele"
@@ -240,21 +240,21 @@ snpeffect<-merge(snpeffect,hs[,c("V7","large_petal_allele_frq")],by.x="rs",by.y=
 # rename
 colnames(snpeffect)[dim(snpeffect)[2]]<-paste0("large_petal_allele_frq_",i)
 }
-# Barplot 39 snps 500 x 250 
+# Barplot all large petal alleles 500 x 250 
 par(mar=c(1,1,1,1), oma=c(2,3,0,0))
 large_petal_allele_frq_per_hsrange<-apply(snpeffect[,grep("HS",colnames(snpeffect))],MARGIN = 2,FUN = sum,na.rm=T)/length(na.omit(snpeffect$large_petal_allele_frq_HS01))
 hscol<-colorRampPalette(rev(viridis::inferno(4)))
-barplot(large_petal_allele_frq_per_hsrange,ylim=c(.22,.37),xpd=F,las=1,col=hscol(20)[6:15],space=0,xaxt="n")
+barplot(large_petal_allele_frq_per_hsrange,ylim=c(0,.25),xpd=F,las=1,col=hscol(20)[6:15],space=0,xaxt="n")
 axis(side = 1,at = 1:10-.5,labels = rep("",10),las=2)
 axis(side = 1,at = 5,labels = "less          -          Habitat suitability          -          more",tick = F,line = 0)
-axis(side = 2,at = .29,labels = "Large Petal Allele frequency",tick = F,line = 2)
+axis(side = 2,at = .125,labels = "Large Petal Allele frequency",tick = F,line = 2)
 
-# Barplot candidate snps
-annot<-read.table("Genetics/functionnal_annotation_Petal_Area.csv",h=T,sep=",",dec=".")[,c("SNP","candidate")]
-annot<-annot[which(annot$candidate == "yes"),]
-large_petal_allele_frq_per_hsrange<-apply(snpeffect[which(snpeffect$rs %in% annot$SNP),grep("HS",colnames(snpeffect))],MARGIN = 2,FUN = sum,na.rm=T)/length(na.omit(snpeffect$large_petal_allele_frq_HS01))
-barplot(large_petal_allele_frq_per_hsrange,xpd=F,las=1,col=rgb(0,.6,.6),space=0,ylim=c(.06,.09))
+# Barplot derived large petal alleles
+ancestry <- na.omit(read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t"))
 
-axis(side = 1,at = 1:10-.5,labels = hsranges)
+
+
+# MAF1
+plot(x = as.numeric(snpeffect[which(snpeffect$rs=="snp_1_28960616"),12:21]) , y = 1:10)
 
 

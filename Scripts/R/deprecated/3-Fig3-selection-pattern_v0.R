@@ -32,7 +32,7 @@ for (i in 1:max(a$counts)) {
 }
 axis(side = 1,at = 0.0015,labels = "SNP total effect size",line = 1,tick = F)
 
-# Pies for other traits
+# Other traits
 traits<-c("Ovule_Number",colnames(read.table("Phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T))[6:16])[c(4:12,1:3)]
 respie<-data.frame(trait=traits, negative=NA, positive=NA)
 
@@ -50,13 +50,135 @@ snpeffect$snpeffect[which(!snpeffect$DER==snpeffect$allele1)]<-(-1)*snpeffect$sn
 # make a dataset
 respie[i,2:3]<-table(sign(snpeffect$snpeffect))
 }
-#plot
+# barplots
+par(mar=c(.1,4,1,1),oma=c(0,0,0,0))
+
+respie$neg_per<-(respie$negative/(respie$negative+respie$positive))*100
+respie$pos_per<-(respie$positive/(respie$negative+respie$positive))*100
+barplot(respie$pos_per,space = c(0,0,0,.2,0,0,.2,0,0,.2,.2,0),ylim = c(-100,60),
+        yaxt="n",col = rgb(.9,.7,.2))
+barplot(-respie$neg_per,space = c(0,0,0,.2,0,0,.2,0,0,.2,.2,0),
+        yaxt="n",col = rgb(0,.7,.7),add=T)
+axis(side = 2,at = c(-50,0,50), labels = c("50%","0%","50%"), las=1)
+abline(h=c(50,-50),lty=2)
+text(x=c(.5,1.5,2.5, 3.7,4.7,5.7, 6.9,7.9,8.9, 10.1, 11.3,12.3)-.3, y=(-85),srt=90,pos=4,
+     labels = c("Area","Length","Width","Area","Length","Width","Area","Length","Width","Number","Long","Short") )
+
+text(x = c(1.5,4.7,7.9,10.1,11.8),y=(-85),c("Petal","Sepal","Leaf","Ovule","Stamen"),pos=1)
+segments(x0 = c(.5,3.7,6.9,11.3),y0 = -87,x1 = c(2.5,5.7,8.9,12.3),y1 = -87)
+
+#pies
 par(mar=c(0,0,0,0),oma=c(0,0,0,0))
 layout(mat = matrix(data = 1:12,nrow = 3,ncol = 4,byrow = F))
 for (i in 1:dim(respie)[1]) {
 pie(as.numeric(respie[i,2:3]),col = c(rgb(0,.7,.7),rgb(.9,.7,.2)),labels = "")
 axis(side = 1,at = 0,labels = gsub(pattern = "_",replacement = " ",traits[i]),tick = F,line = -2)
 }
+
+
+
+# trash
+# 
+# traits<-c("Ovule_Number",colnames(read.table("Phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T))[c(6,7,9:16)])[c(4:11,1:3)]
+# 
+# par(mfrow=c(4,3),mar=c(3.1,1,1,1),oma=c(0,0,0,0))
+# 
+# for (i in 1:length(traits)) {
+#   snpeffect <- read.table(paste0("Genetics/bslmm_flct_",traits[i],".param.txt"),h=T,sep="\t",dec=".")
+#   snpeffect$snpeffect<-snpeffect$alpha+snpeffect$beta*snpeffect$gamma
+#   # Spot allele 1 in GWAs, change sign of effect if allele 1 is not derived
+#   Assoc <- read.table(paste0("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_",traits[i],".assoc.txt"),h=T,sep="\t",dec=".")
+#   snpeffect<-merge(snpeffect,Assoc[,c("rs","allele0","allele1","p_lrt")],by="rs",all.x = T,sort = F)
+#   #ancestry and annot
+#   ancestry <- na.omit(read.table(paste0("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_",traits[i],".iHS.AD.GO.txt"),h=T,sep="\t"))
+#   
+#   snpeffect<-merge(snpeffect,ancestry,by.x="rs",by.y="snpID",all.x=T,sort = F)
+#   snpeffect$snpeffect[which(!snpeffect$DER==snpeffect$allele1)]<-(-1)*snpeffect$snpeffect[which(!snpeffect$DER==snpeffect$allele1)]
+#   #candidates
+#   candidates<-ancestry$snpID[which(ancestry$growth_dev==1)]
+#   snpeffect.c<-snpeffect[which(snpeffect$growth_dev==1),]
+#   # remove duplicated
+#   snpeffect.c<-snpeffect.c[-which(duplicated(snpeffect.c[,c("rs","snpeffect","iHS")])),]
+#   #recalibration snpeffect for plot
+#   snpeffect.c$snpeffect<-(round(snpeffect.c$snpeffect*1000)+(.25*sign(snpeffect.c$snpeffect)))/1000
+#   #xmax<-round(max(abs(range(snpeffect.c$snpeffect))),3)+.0005
+#   xmax=0.015
+#   # snpeffect.c<-snpeffect.c[-which(duplicated(snpeffect.c)),]
+#   a<-hist(snpeffect.c$snpeffect,breaks = seq(-xmax,xmax,0.001),main = "",
+#           ylim=c(0,8),xlim=c(-0.01,0.01),las=1,col = rgb(0,.7,.7),
+#           yaxt="n",ylab="",xlab="")
+#   b<-hist(snpeffect.c$snpeffect[which(snpeffect.c$snpeffect > 0)],breaks = seq(-xmax,xmax,0.001),
+#           add=T,col = rgb(.9,.7,.2))
+#   
+#   for (j in 1:max(a$counts)) {
+#     segments(x0 = a$breaks[-length(a$breaks)],y0 = a$counts-j,x1 = a$breaks[-1],y1 = a$counts-j,col="black")
+#   }
+#   axis(side = 1,at = 0,labels = "Derived allele total effect size",line = 1,tick = F)
+#   
+#   snpeffect.s<-snpeffect.c[which(snpeffect.c$iHS_pval<0.1),]
+#   # which allele is selected
+#   snpeffect.s$selected<-"derived"
+#   x<-which(snpeffect.s$IHH_ancestral>snpeffect.s$IHH_derived)
+#   if(length(x)>0){snpeffect.s$selected[x]<-"ancestral"}
+#   
+#   x<-(round(snpeffect.s$snpeffect*1000)+(.5*sign(snpeffect.s$snpeffect)))/1000
+#   y<-rep(1,length(x))
+#   xy<-data.frame(x=x,y=y)
+#   z<-which(duplicated(xy))
+#   while (length(z)>0) {
+#     xy$y[z]<-xy$y[z]+1
+#     z<-which(duplicated(xy))
+#   }
+#   xy$type<-factor(x = snpeffect.s$selected,levels = c("derived","ancestral"))
+#   points(xy$x,xy$y-.5,pch=c(24,25)[xy$type],bg=c("white","black")[xy$type],cex=2)
+#   title(main = traits[i])
+# }
+# 
+# 
+# # Other traits
+# traits<-c("Ovule_Number",colnames(read.table("Phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T))[6:16])[c(4:12,1:3)]
+# respie<-data.frame(trait=traits, negative=NA, positive=NA)
+# 
+# for (i in 1:length(traits)) {
+#   snpeffect <- read.table(paste0("Genetics/bslmm_top100_",traits[i],".param.txt"),h=T,sep="\t",dec=".")
+#   snpeffect$snpeffect<-snpeffect$alpha+snpeffect$beta*snpeffect$gamma
+#   # Spot allele 1 in GWA
+#   Assoc <- read.table(paste0("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_",traits[i],".assoc.txt"),h=T,sep="\t",dec=".")
+#   snpeffect<-merge(snpeffect,Assoc[,c("rs","allele0","allele1","p_lrt")],by="rs",all.x = T,sort = F)
+#   # spot ancestry
+#   ancestry <- read.table(paste0("Genetics/ADstate_",traits[i],".csv"),h=T,sep=";")
+#   snpeffect<-merge(snpeffect,ancestry,by.x="rs",by.y="snpID",all.x=T,sort = F)
+#   # change sign of effect if allele 1 is not derived
+#   snpeffect$snpeffect[which(!snpeffect$DER==snpeffect$allele1)]<-(-1)*snpeffect$snpeffect[which(!snpeffect$DER==snpeffect$allele1)]
+#   # make a dataset
+#   respie[i,2:3]<-table(sign(snpeffect$snpeffect))
+# }
+# # barplots
+# par(mar=c(.1,4,1,1),oma=c(0,0,0,0))
+# 
+# respie$neg_per<-(respie$negative/(respie$negative+respie$positive))*100
+# respie$pos_per<-(respie$positive/(respie$negative+respie$positive))*100
+# barplot(respie$pos_per,space = c(0,0,0,.2,0,0,.2,0,0,.2,.2,0),ylim = c(-100,60),
+#         yaxt="n",col = rgb(.9,.7,.2))
+# barplot(-respie$neg_per,space = c(0,0,0,.2,0,0,.2,0,0,.2,.2,0),
+#         yaxt="n",col = rgb(0,.7,.7),add=T)
+# axis(side = 2,at = c(-50,0,50), labels = c("50%","0%","50%"), las=1)
+# abline(h=c(50,-50),lty=2)
+# text(x=c(.5,1.5,2.5, 3.7,4.7,5.7, 6.9,7.9,8.9, 10.1, 11.3,12.3)-.3, y=(-85),srt=90,pos=4,
+#      labels = c("Area","Length","Width","Area","Length","Width","Area","Length","Width","Number","Long","Short") )
+# 
+# text(x = c(1.5,4.7,7.9,10.1,11.8),y=(-85),c("Petal","Sepal","Leaf","Ovule","Stamen"),pos=1)
+# segments(x0 = c(.5,3.7,6.9,11.3),y0 = -87,x1 = c(2.5,5.7,8.9,12.3),y1 = -87)
+# 
+# #pies
+# par(mar=c(0,0,0,0),oma=c(0,0,0,0))
+# layout(mat = matrix(data = 1:12,nrow = 3,ncol = 4,byrow = F))
+# for (i in 1:dim(respie)[1]) {
+#   pie(as.numeric(respie[i,2:3]),col = c(rgb(0,.7,.7),rgb(.9,.7,.2)),labels = "")
+#   axis(side = 1,at = 0,labels = gsub(pattern = "_",replacement = " ",traits[i]),tick = F,line = -2)
+# }
+
+
 
 # 3b - PINPIS
 #------------
