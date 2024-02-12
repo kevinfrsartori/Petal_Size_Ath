@@ -252,3 +252,48 @@ summod<-summary(mod)
 plot(modV2018$fitness ~ modV2018$Petal_Area)
 mod<-summary(lme4::lmer(fitness ~ Petal_Area + (1|idAccession), data = modV2018))
 mod$coefficients
+
+
+
+# Panel C - PiN/PiS-HS relationship 320 x 280 
+#----------------------------------
+hsranges<-c(paste0("HS0",1:9),"HS10")
+pinpis<-read.table("../large_files/Ath_Petal_size/pinpis/outputs/wholegenome_pinpis_HS01.txt",h=T,na.strings = c("NA","Inf","-Inf"))
+pinpis$log10_PinPis<-log10(pinpis$PinPis)
+pinpis$log10_PinPis[which(pinpis$log10_PinPis==-Inf)]<-NA
+
+
+hist(pinpis$log10_PinPis)
+library(vioplot)
+plot(0, 0, xlim=c(.5,10.5), ylim=c(-3,1.5), las=1,xaxt="n",yaxt="n",
+     xlab="Habitat suitability ranges",ylab="PiN/PiS (log scale)")
+axis(side = 1, at = 1:10, labels = hsranges, las=2)
+axis(side = 2, at = c(-3,-2,-1,0,1,2), labels = c(0.001,0.01,0.1,1,10,100),las=1)
+
+for (i in 1:10) {
+  pinpis<-read.table(paste0("../large_files/Ath_Petal_size/pinpis/outputs/wholegenome_pinpis_",hsranges[i],".txt"),
+                     h=T,na.strings = c("NA","Inf","-Inf"))
+  pinpis$log10_PinPis<-log10(pinpis$PinPis)
+  pinpis$log10_PinPis[which(pinpis$log10_PinPis==-Inf)]<-NA
+  
+  vioplot(pinpis$log10_PinPis,add = T,at = i, 
+          col = "grey85", border = "grey50", rectCol = "grey85", lineCol = "grey30")
+}
+
+annot<-read.table("Genetics/functionnal_annotation_Petal_Area.csv",h=T,sep=",",dec=".")[,c("gene_ID","gene_name","candidate")]
+annot<-annot[which(annot$candidate == "yes"),]
+# Select informative genes
+annot<-annot[c(2,3,10,1,4,6),]
+# vioplot
+par(mfrow=c(2,3),oma=c(2,2,0,0),mar=c(1,2,1,1))
+mycol=c(rep(rgb(0,.6,.5),5),rgb(.7,.4,.3))
+for(i in 1:dim(annot)[1]){
+  piehsgene<-read.table(paste0("../large_files/Ath_Petal_size/pinpis/outputs/result_",annot$gene_ID[i],".1.txt"),h=T)
+  piehsgene$log10_PinPis<-log10(piehsgene$PinPis)
+  piehsgene$log10_PinPis[which(piehsgene$log10_PinPis==-Inf)]<-NA
+  piehsgene$log10_PinPis[which(piehsgene$log10_PinPis==Inf)]<-NA
+  vioplot(piehsgene$log10_PinPis ~ piehsgene$HS,xaxt="n",las=1,col=mycol[i])
+  axis(side = 1,at = 1:10,labels = rep("",10))
+  title(main = annot$gene_name[i],outer = )
+}
+title(xlab = "Habitat suitability ranges",ylab="PiN/PiS (log10)",outer = T,line = 1,cex.lab=1)

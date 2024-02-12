@@ -175,11 +175,28 @@ for (i in 1:10) {
         col = "grey85", border = "grey50", rectCol = "grey85", lineCol = "grey30")
 }
 
-annot<-read.table("Genetics/functionnal_annotation_Petal_Area.csv",h=T,sep=",",dec=".")[,c("gene_ID","gene_name","candidate")]
-annot<-annot[which(annot$candidate == "yes"),]
-# Select informative genes
-annot<-annot[c(2,3,10,1,4,6),]
-# vioplot
+# relaxed_pinpis petal genes
+genelist<-c("AT4G32290","AT1G36940","AT4G32295","AT1G77080")
+# petal area genes
+genes <- read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t")
+
+
+
+pinpis_pg<-matrix(data = NA,nrow = length(genelist), ncol = 10, dimnames = list(genelist,hsranges))
+for (i in 1:10) {
+  pinpis<-read.table(paste0("../large_files/Ath_Petal_size/pinpis/outputs/wholegenome_pinpis_",hsranges[i],".txt"),
+                                               h=T,na.strings = c("NA","Inf","-Inf"))
+  pinpis$log10_PinPis<-log10(pinpis$PinPis)
+  pinpis$log10_PinPis[which(pinpis$log10_PinPis %in% c(-Inf,NaN))]<-NA
+  pinpis<-pinpis[which(pinpis$Gene_ID %in% genelist),]
+  pinpis$Gene_ID<-factor(x = pinpis$Gene_ID,levels = genelist)
+  pinpis_petalgenes<-tapply(X = pinpis$log10_PinPis,INDEX = pinpis$Gene_ID,FUN = mean,na.rm=T)
+  pinpis_pg[,i]<-pinpis_petalgenes
+}
+
+apply(pinpis_pg,MARGIN = 2, FUN = mean, na.rm=T)
+
+# vioplot for bootstrapped genes
 par(mfrow=c(2,3),oma=c(2,2,0,0),mar=c(1,2,1,1))
 mycol=c(rep(rgb(0,.6,.5),5),rgb(.7,.4,.3))
 for(i in 1:dim(annot)[1]){
@@ -251,10 +268,19 @@ axis(side = 2,at = .125,labels = "Large Petal Allele frequency",tick = F,line = 
 
 # Barplot derived large petal alleles
 ancestry <- na.omit(read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t"))
-
-
+#...
 
 # MAF1
-plot(x = as.numeric(snpeffect[which(snpeffect$rs=="snp_1_28960616"),12:21]) , y = 1:10)
+plot(x = 1:10, y = as.numeric(snpeffect[which(snpeffect$rs=="snp_1_28960616"),12:21]) )
+# JMJ18
+plot(x = 1:10, y = as.numeric(snpeffect[which(snpeffect$rs=="snp_1_10937139"),12:21]) )
+# AT5G03480 
+plot(x = 1:10, y = as.numeric(snpeffect[which(snpeffect$rs=="snp_5_870273"),12:21]) )
+
+
+# Panel F - Petal genes-HS 500 x 250
+#
+# 1st choice: all annotated genes
+genelist <- unique(read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t")[,4])
 
 

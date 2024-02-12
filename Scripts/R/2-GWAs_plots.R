@@ -255,12 +255,16 @@ leaf<-grep(pattern = "Leaf",grep(pattern = threshold,list.files("../large_files/
 leaf<-leaf[-grep(pattern = "iHS",leaf)]
 leaf<-leaf[-grep(pattern = "ontology",leaf)]
 
+ft<-grep(pattern = "flower",grep(pattern = threshold,list.files("../large_files/Ath_Petal_size/tables/"),value = T),value = T)
+ft<-ft[-grep(pattern = "iHS",ft)]
+ft<-ft[-grep(pattern = "ontology",ft)]
 
 petal_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",petal[1])),read.table(paste0("../large_files/Ath_Petal_size/tables/",petal[2])),read.table(paste0("../large_files/Ath_Petal_size/tables/",petal[3])))[,5])
 sepal_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",sepal[1])),read.table(paste0("../large_files/Ath_Petal_size/tables/",sepal[2])),read.table(paste0("../large_files/Ath_Petal_size/tables/",sepal[3])))[,5])
-ovule_list<-read.table(paste0("../large_files/Ath_Petal_size/tables/",ovule[1]))[,5]
+ovule_list<-unique(read.table(paste0("../large_files/Ath_Petal_size/tables/",ovule[1])))[,5]
 stamen_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",stamen[1])),read.table(paste0("../large_files/Ath_Petal_size/tables/",stamen[2])) )[,5])
 leaf_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",leaf[1])),read.table(paste0("../large_files/Ath_Petal_size/tables/",leaf[2])),read.table(paste0("../large_files/Ath_Petal_size/tables/",leaf[3])))[,5])
+ft_list<-unique(read.table(paste0("../large_files/Ath_Petal_size/tables/",ft[1])))[,5]
 
 venn.diagram(
   x = list(leaf_list,sepal_list,stamen_list,petal_list),
@@ -285,7 +289,7 @@ venn.diagram(
   cat.col = c("green4","greenyellow","lightblue","grey50"),
 )
 
-
+intersect(ovule_list,ft_list)
 # Venn diagram - growth dev GENES
 
 threshold<-c("flct","pvl4")[1]

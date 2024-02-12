@@ -69,8 +69,8 @@ title(main="Petal Area alleles counts")
 # xy$type<-factor(x = snpeffect.s$selected,levels = c("derived","ancestral"))
 # points(xy$x,xy$y-.5,pch=c(24,25)[xy$type],bg=c("white","black")[xy$type],cex=2)
 # 
-
-# How to do for the other traits?
+hist(snpeffect_nodup$iHS[which(snpeffect_nodup$snpeffect>0)])
+hist(snpeffect_nodup$iHS[which(snpeffect_nodup$snpeffect<0)])
 
 # 2b - Other traits
 traits<-c("Ovule_Number",colnames(read.table("Phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T))[6:16])[c(4:12,1:3)]
@@ -98,6 +98,9 @@ for (i in 1:length(traits)) {
   snpeffect_nodup<-snpeffect_nodup[-which(duplicated(snpeffect_nodup$geneID)),]
   # 2-Keep one representative per SNP if ancestry is conserved
   snpeffect_nodup<-snpeffect_nodup[-which(duplicated(snpeffect_nodup[,c("rs","iHS")])),]
+  
+  hist(snpeffect_nodup$iHS[which(snpeffect_nodup$snpeffect>0)],main = traits[i])
+  
   
   # make a dataset
   respie[i,2:3]<-table(sign(snpeffect_nodup$snpeffect))
@@ -145,7 +148,7 @@ candidates<-petal_list$geneID[which(petal_list$growth_dev==1)]
 allgenes<-tapply(X = log10(pinpis$PinPis[which(pinpis$Gene_ID %in% petal_list$geneID)]),
                  INDEX = pinpis$Gene_ID[which(pinpis$Gene_ID %in% petal_list$geneID)],
                  FUN =  mean)
-  
+
 d2<-density(allgenes,bw=.25)
 polygon(d2$x,d2$y*.6-.1,col = rgb(0,.5,.5))
 
@@ -158,11 +161,45 @@ text(-4.2,0.02,"Whole genome",pos=4)
 text(-4.2,-.1+0.02,"Petal area genes",pos=4)
 text(-4.2,-.2+0.02,"Petal Growth Dev. genes",pos=4)
 
+sort(allgenes)  
+sort(allgenes[which(names(allgenes) %in% candidates)])
+
+genelist<-names(which(allgenes<0))
 
 # Use genome wide distrib to compute P-value
 1-pnorm(sort(allgenes), mean = mean(pinpis$logpinpis,na.rm=T), sd(pinpis$logpinpis,na.rm=T) )
 gd_genes<-allgenes[which(names(allgenes) %in% candidates)]
 1-pnorm(sort(gd_genes), mean = mean(pinpis$logpinpis,na.rm=T), sd(pinpis$logpinpis,na.rm=T) )
+
+
+# all traits
+traits<-c("Ovule_Number",colnames(read.table("Phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T))[c(6:16,22)])[c(4:12,1:3,13)]
+colors<-c("white","white","white","greenyellow","greenyellow","greenyellow","green4","green4","green4","lightpink","lightblue","lightblue","black")
+
+d<-density(x = na.omit(pinpis$logpinpis),bw = .1)
+plot(d,main = "PiN/PiS density distribution",ylim=c(-1.3,.75),xlim=c(-4,2),
+     yaxt="n",xaxt="n",xlab="")
+polygon(d,col = rgb(0,.6,.6))
+
+for(i in 1:length(traits)){
+list<-read.table(paste0("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_",traits[i],".iHS.AD.GO.txt"),h=T,sep="\t")
+allgenes<-tapply(X = log10(pinpis$PinPis[which(pinpis$Gene_ID %in% list$geneID)]),
+                 INDEX = pinpis$Gene_ID[which(pinpis$Gene_ID %in% list$geneID)],
+                 FUN =  mean,na.rm=T)
+if(any(allgenes %in% c(Inf,-Inf))){allgenes<-allgenes[-which(allgenes %in% c(Inf,-Inf))]}
+
+if(any(is.na(allgenes))){allgenes<-allgenes[-which(is.na(allgenes))]}
+
+d2<-density(allgenes,bw=.25)
+polygon(d2$x,d2$y*.8-(.1*i),col = colors[i])
+
+Ttest<-t.test(allgenes,na.omit(pinpis$logpinpis))
+if(Ttest$p.value<0.1){ text(-4.2,-(.1*i)+0.02,paste0(traits[i]," (P < 0.1)"),pos=4) }else{ text(-4.2,-(.1*i)+0.02,traits[i],pos=4) }
+}
+
+abline(v=mean(pinpis$logpinpis,na.rm = T),lwd=2,lty=2,col="white")
+library(statpsych)
+test.skew(allgenes)
 
 # 2d - iHS
 #---------
