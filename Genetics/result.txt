@@ -1,0 +1,9 @@
+0.1	843 people excluded by --rel-cutoff.
+0.25	506 people excluded by --rel-cutoff.
+0.50	223 people excluded by --rel-cutoff.
+0.75	126 people excluded by --rel-cutoff.
+0.9	98 people excluded by --rel-cutoff.
+0.95	87 people excluded by --rel-cutoff.
+0.99	77 people excluded by --rel-cutoff.
+0.999	73 people excluded by --rel-cutoff.
+0.9999	73 people excluded by --rel-cutoff.
