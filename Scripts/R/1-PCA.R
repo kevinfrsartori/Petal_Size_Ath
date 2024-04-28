@@ -33,31 +33,31 @@ layout(mat = matrix(data = c(1,1,2,3),nrow = 2,ncol = 2,byrow = T),heights = c(.
 colors<-c("green4","green4","green4","white","white","white","greenyellow","greenyellow","greenyellow","lightblue","lightblue","lightpink","black")
 lett<-c("Area","Length","Width","Area","Length","Width","Area","Length","Width","Long","Short","Ovule number","Flowering time")
 
-par(mar=c(.1,.1,2,.1),oma=c(0,0,0,0))
+par(mar=c(.1,.1,3,.1),oma=c(0,0,0,0))
 barplot(c(res.pca$var$cor[,1],res.pca$quanti.sup$cor[,1]),
         xaxt="n",yaxt="n",horiz = T,xlim = c(-.35,1.1),space = 0,col=colors)
 
 axis(side = 3,at = c(0,.5,1), labels = c("","",""),line = 0)
-axis(side = 3,at = c(0,.5,1), labels = c("0",".5","1"),line = -.5,cex.axis=.75,tick = F)
-axis(side = 3,at = .5, labels = c(paste0("Trait correlation with PC1 (",round(res.pca$eig[1,2],1),"% var.)")),line = 0,cex.axis=1,tick = F)
+axis(side = 3,at = c(0,.5,1), labels = c("0",".5","1"),line = -.5,cex.axis=1,tick = F)
+axis(side = 3,at = .5, labels = c(paste0("Trait correlation with PC1 (",round(res.pca$eig[1,2],1),"% var.)")),line = .5,cex.axis=1.25,tick = F)
 
 X<-c(res.pca$var$cor[,1],res.pca$quanti.sup$cor[,1])
 X[which(X<0)]<-0
-text(x = X,y= 1:13-.5,labels = lett,pos = 4,cex = .75)
+text(x = X,y= 1:13-.5,labels = lett,pos = 4,cex = 1.25)
 
-img<-png::readPNG("phenotypes/rawfiles/images/legend_manhattan.png")
-rasterImage(img,xleft = -.3, ybottom = 4, xright = -.01, ytop = 12)
+img<-png::readPNG("phenotypes/rawfiles/images/leaf_flower_dissect.png")
+rasterImage(img,xleft = -.3, ybottom = 4.5, xright = -.01, ytop = 11.5)
 
-par(mar=c(.1,2,.1,.1))
+par(mar=c(.1,3,.1,.1))
 
 barplot(c(res.pca$var$cor[,2],res.pca$quanti.sup$cor[,2]),
         xaxt="n",yaxt="n",ylim=c(-.2,1.2),space=0,col=colors)
 axis(side = 2,at = c(0,.5,1), labels = c("","",""),line = 0)
-axis(side = 2,at = c(0,.5,1), labels = c("0",".5","1"),line = -.5,cex.axis=.75,tick = F,las=1)
-axis(side = 2,at = .5, labels = c(paste0("Trait correlation with PC2 (",round(res.pca$eig[2,2],1),"% var.)")),line = 0,cex.axis=1,tick = F)
+axis(side = 2,at = c(0,.5,1), labels = c("0",".5","1"),line = -.5,cex.axis=1,tick = F,las=1)
+axis(side = 2,at = .5, labels = c(paste0("Trait correlation with PC2 (",round(res.pca$eig[2,2],1),"% var.)")),line = .5,cex.axis=1.25,tick = F)
 Y<-c(res.pca$var$cor[,2],res.pca$quanti.sup$cor[,2])
 Y[which(Y<0)]<-0
-text(y = Y,x= (0:12),labels = lett,pos = 4,cex = .75,srt=90)
+text(y = Y,x= (0:12),labels = lett,pos = 4,cex = 1.25,srt=90)
 
 ### Custom PCA 
 library(plotrix)
@@ -65,22 +65,22 @@ par(mar=c(0,0,0,0))
 plot(0,0,xlim=c(-5.2,5.2),ylim=c(-5.2,5.2),pch=3,frame.plot = F,xlab = paste0("PC1 ",round(res.pca$eig[1,2],2),"%"),
      ylab=paste0("PC2 ",round(res.pca$eig[2,2],2),"%"),asp=1,xaxt="n",yaxt="n")
 # images
-img<-png::readPNG("phenotypes/rawfiles/images/5165_contour.png")
+img<-png::readPNG("phenotypes/rawfiles/images/5165_contour_col.png")
 rasterImage(img,-7.5,-2.5,-2.5,2.5)
-img<-png::readPNG("phenotypes/rawfiles/images/6133_contour.png")
-rasterImage(img,7,-2.5,2.5,2.5)
-img<-png::readPNG("phenotypes/rawfiles/images/8419_contour.png")
-rasterImage(img,-2.5,6.8,2.5,2.3)
-img<-png::readPNG("phenotypes/rawfiles/images/9762_contour.png")
+img<-png::readPNG("phenotypes/rawfiles/images/6133_contour_col.png")
+rasterImage(img,7.5,-2.5,2.5,2.5)
+img<-png::readPNG("phenotypes/rawfiles/images/8419_contour_col.png")
+rasterImage(img,-2.5,6.8,2.5,1.8)
+img<-png::readPNG("phenotypes/rawfiles/images/9762_contour_col.png")
 rasterImage(img,-2.5,-7.3,2.5,-2.3)
 # circle
 draw.circle(0,0,5)
 arrows(-6,0,6,0,length = 0.1,angle = 20)
 arrows(0,-6,0,5.5,length = 0.1,angle = 20)
 
-points(res.pca$ind$coord[,1], res.pca$ind$coord[,2],col=rgb(0,.4,.4,.5),pch=16,cex=1.5)
-text(x = -2.5,y = -.3,labels = "PC1",pos=3)
-text(x = 0,y = -2.5,labels = "PC2",pos=2,srt=90)
+points(res.pca$ind$coord[,1], res.pca$ind$coord[,2],pch=21,bg=rgb(0,0,0,.1),cex=1.5)
+#text(x = -2.5,y = -.3,labels = "PC1",pos=3)
+#text(x = 0,y = -2.5,labels = "PC2",pos=2,srt=90)
 
 
 # Fig1.B - phenotypes allometry 650 x 600
@@ -95,8 +95,8 @@ layout(matrix(c(1,4,2,3),2,2,T))
 # Sepal area ~ Petal area
 par(mar=c(0,5,5,0))
 plot(smadt$Sepal_Area ~ smadt$Petal_Area,
-     ylab=expression(Sepal ~ Area ~ mm^2 ~ "(log10)"),
-     pch=16,col=rgb(0,.4,.4,.5),xaxt="n",las=1)
+     ylab=expression(Sepal ~ Area ~ mm^2 ~ "(log10)"),cex.lab=1.25,
+     pch=21,bg=rgb(0,0,0,.1),xaxt="n",las=1,cex=1.5)
 smamod<-smatr::sma(smadt$Sepal_Area ~ smadt$Petal_Area,slope.test = 1)
 p<-smamod$pval[[1]]
 p<-"P-value < 0.01"
@@ -109,9 +109,9 @@ text(x,y,paste0(" Slope = ",s,"\n R-squared = ",r,"\n ",p),pos=4)
 # Leaf Area ~ Petal area
 par(mar=c(5,5,0,0))
 plot(smadt$Leaf_Area ~ smadt$Petal_Area,
-     ylab=expression(Leaf ~ Area ~ mm^2 ~ "(log10)"),
+     ylab=expression(Leaf ~ Area ~ mm^2 ~ "(log10)"),cex.lab=1.25,
      xlab=expression(Petal ~ Area ~ mm^2 ~ "(log10)"),
-     pch=16,col=rgb(0,.4,.4,.5),las=1)
+     pch=21,bg=rgb(0,0,0,.1),las=1,cex=1.5)
 smamod<-smatr::sma(smadt$Leaf_Area ~ smadt$Petal_Area,slope.test = 1)
 p<-round(smamod$pval[[1]],2)
 
@@ -123,8 +123,8 @@ text(x,y,paste0("P-value = ",p),pos=4)
 par(mar=c(5,0,0,5))
 plot(smadt$Leaf_Area ~ smadt$Sepal_Area,
      ylab="",yaxt="n",
-     xlab=expression(Sepal ~ Area ~ mm^2 ~ "(log10)"),
-     pch=16,col=rgb(0,.4,.4,.5),las=1)
+     xlab=expression(Sepal ~ Area ~ mm^2 ~ "(log10)"),cex.lab=1.25,
+     pch=21,bg=rgb(0,0,0,.1),las=1, cex=1.5)
 smamod<-smatr::sma(smadt$Leaf_Area ~ smadt$Sepal_Area,slope.test = 1)
 p<-round(smamod$pval[[1]],2)
 
