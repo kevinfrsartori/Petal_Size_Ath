@@ -217,6 +217,45 @@ for (j in 1:length(traits)) {
 }
 write.table(x = traits,file = "../large_files/Ath_Petal_size/gwas/pheno107/list_traits_pheno107.txt",quote = F,row.names = F)
 
+# iHS enrichment test
+par(mar=c(4,4,.1,.1))
+enrich<-read.table("Genetics/iHS/enrich_alltraits.txt")
+rownames(enrich)
+mycol<-c("black","green4","green4","green4","lightblue","lightpink","white","white","white","greenyellow","greenyellow","greenyellow","lightblue")
+pollen<-read.table("Genetics/iHS/pollenpaper_enrichtest.csv",h=T,sep=";",dec=",")
+#### generate the enrichment plot 
+par(mfrow=c(1,1))
+cutoff <- c(1,2,3,4)
+plot(cutoff,enrich[1:4,1],type="n",
+     ylim=c(0,13),ylab="Fold enrichment",xlab="Top X % of selection scan",main="",cex=1,xaxt="n",las=1)
+axis(side = 1, at = 1:4, labels = c("10%", "5%", "2.5%", "1%"))
+# pollen data
+for(i in 3:110){
+  points(cutoff,pollen[i,2:5],type="l",col="grey",lwd=1)
+}
+for(i in 1:2){
+  points(cutoff,pollen[i,2:5],type="l",col="red",lwd=1)
+}
+for(i in 1:13){
+  points(cutoff,enrich[i,1:4],type="l",col="black",lwd=4)
+  points(cutoff,enrich[i,1:4],type="l",col=mycol[i],lwd=2)
+}
+
+
+abline(h=1,lty=2,lwd=2)
+abline(v=1,lty=2,lwd=1)
+abline(v=2,lty=2,lwd=1)
+abline(v=3,lty=2,lwd=1)
+abline(v=4,lty=2,lwd=1)
+
+# Relatedness cutoff 800 x 500
+res<-read.table("Genetics/result.txt")
+plot(log(1-res$V1),1135-res$V2,xaxt="n",type="l",lwd=2,
+     ylim=c(0,1135),las=1,ylab="Nb of accessions passing the threshold",xlab="Relatedness threshold")
+axis(side = 1, at = log(1-res$V1), labels = res$V1)
+axis(side = 2,at = 1135, labels = 1135, las=1)
+abline(v=log(1-res$V1),lty=2)
+abline(h=1135,lty=2)
 # EHH along HS
 
 # Run snpeff for the 3 genes with raw genetic data

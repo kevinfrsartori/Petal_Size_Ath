@@ -9,6 +9,7 @@
 #----------------------------------
 par(mar=c(3,3,2,0),oma=c(0,0,0,0))
 library(raster)
+library(rasterVis)
 library(viridis)
 HS<-raster("../large_files/Ath_Petal_size/habitat_suitability/Niche_modelling/Habitat_suitability_Ath_2023-04-27.grd")
 # crop
@@ -26,6 +27,56 @@ colnames(g1001)<-c("accession_name","latitude","longitude","group")
 g1001<-g1001[which(g1001$accession_name %in% acc$V1),]
 # plot the studied sites on the map
 points(g1001$longitude,g1001$latitude,pch=21,col=rgb(0,.6,.6),cex=.8,lwd=2)
+
+# For Supp, full map
+# crop ylim=c(15,70),xlim=c(-150,150)
+ath_dist<-as(extent(-150, 150, 15, 70), 'SpatialPolygons')
+crs(ath_dist) <- "+proj=longlat +datum=WGS84 +no_defs"
+HSath<-crop(HS, ath_dist)
+# visualize the map
+hscol<-colorRampPalette(rev(viridis::inferno(4)))
+#plot(HS$layer,col=hscol(255),las=1) # whole
+plot(HSath$layer,col=hscol(255),las=1, legend=F) # cropped
+# Limiting factors
+lim<-raster("../large_files/Ath_Petal_size/habitat_suitability/Niche_modelling/Limiting_facgtors_Ath_2023-07-07.grd")
+# visualize the map
+longname<-c("isothermality","Temp_coldest_month","Annual_temp_range","Temp_wettest_quarter","Temp_warmest_quarter","Prec_seasonality","Prec_wettest_quarter","Prec_driest_quarter","Altitude")
+mycol=c("purple","coral","wheat4","coral3","coral4","slategray2","skyblue2","skyblue4","black")
+ath_dist<-as(extent(-10, 50, 35, 69), 'SpatialPolygons')
+crs(ath_dist) <- "+proj=longlat +datum=WGS84 +no_defs"
+limath<-crop(lim, ath_dist)
+limath<-ratify(limath)
+levelplot(limath,col.regions=mycol,att="ID",colorkey=F)
+
+lim<-ratify(lim)
+levelplot(lim,col.regions=mycol,att="ID",colorkey=F)
+
+# Legend
+plot(rep(0,9),1:9,xlim=c(0,10),ylim=c(9,-1),cex=3,pch=22,col="black",bty="n",xaxt="n",yaxt="n",ylab="",xlab="",
+     bg=c("purple","coral","wheat4","coral3","coral4","slategray2","skyblue2","skyblue4","black"))
+text(1,-.5,"Legend",font=2)
+text(rep(.5,9),1:9,pos=4,labels=longname)
+
+# Petal area as a function of limiting factor
+phenotypes<-read.table("Phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
+limiting<-read.table("Niche_Modelling/accessions_1001g_habitatsuitability.csv",h=T,sep=",")
+phenotypes<-merge(phenotypes,limiting,by.x="Genotype",by.y="accession_name",all.x=T)
+levels(as.factor(phenotypes$LF))
+
+
+longname<-rev(c("isothermality","Temp_coldest_month","Annual_temp_range","Temp_wettest_quarter","Temp_warmest_quarter","Prec_seasonality","Prec_wettest_quarter","Prec_driest_quarter","Altitude"))
+mycol=rev(c("purple","coral","wheat4","coral3","coral4","slategray2","skyblue2","skyblue4","black"))
+phenotypes$LF<-factor(x = phenotypes$LF,levels = longname)
+par(mar=c(4,10,1,1))
+boxplot(phenotypes$Petal_Area ~ phenotypes$LF,horizontal=T,las=1,col=mycol,ylab="",ylim=c(0,4),xlim=c(.5,10),xlab="Petal area (mm2)")
+axis(side = 2,at = 10,labels = "Limiting factor : ",las=1,tick = F)
+#anova
+anova<-aov(Petal_Area ~ LF, data = phenotypes)
+(tukey<-TukeyHSD(anova))
+library(multcomp)
+glht_mod<-glht(anova, linfct=mcp(LF="Tukey"))
+letters<-cld(glht_mod)$mcletters$Letters
+text(0,c(1,2,3,4,7,8,9),letters,pos=4)
 
 # Panel B - Trait-HS relationship 320 x 320
 #--------------------------------
@@ -268,6 +319,28 @@ axis(side = 2,at = .125,labels = "Large Petal Allele frequency",tick = F,line = 
 
 # Barplot derived large petal alleles
 ancestry <- na.omit(read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t"))
+# Filter SNPs
+# 1-Keep one snp per gene, the one with longest haplotype
+ancestry<-ancestry[order(ancestry$iHS_pval,decreasing = T),]
+ancestry<-ancestry[-which(duplicated(ancestry$geneID)),]
+# 2-Keep one representative per SNP if ancestry is conserved
+ancestry<-ancestry[-which(duplicated(ancestry[,c("snpID","iHS")])),]
+
+snpeffect<-merge(snpeffect,ancestry[,c(1,10)],by.x="rs",by.y="snpID",all.x=T)
+snpeffect<-snpeffect[which(snpeffect$large_petal_allele == snpeffect$DER),]
+
+par(mar=c(1,1,1,1), oma=c(2,3,0,0))
+large_petal_allele_frq_per_hsrange<-apply(snpeffect[,grep("HS",colnames(snpeffect))],MARGIN = 2,FUN = sum,na.rm=T)/length(na.omit(snpeffect$large_petal_allele_frq_HS01))
+hscol<-colorRampPalette(rev(viridis::inferno(4)))
+barplot(large_petal_allele_frq_per_hsrange,ylim=c(0.1,.25),xpd=F,las=1,col=hscol(20)[6:15],space=0,xaxt="n")
+axis(side = 1,at = 1:10-.5,labels = rep("",10),las=2)
+axis(side = 1,at = 5,labels = "less          -          Habitat suitability          -          more",tick = F,line = 0)
+axis(side = 2,at = .125,labels = "Large Petal Allele frequency",tick = F,line = 2)
+
+
+
+
+
 #...
 
 # MAF1

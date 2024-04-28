@@ -8,6 +8,7 @@
 phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
 names(phenotypes)[5]<-"Ovule_Number"
 traits<-colnames(phenotypes)[c(5:16,22)]
+library(GWASTools)
 
 # pre set threshold with FLC and FT
 i<-13
@@ -32,12 +33,15 @@ Assoc$Pvl_order<-rank(Assoc$p_lrt)
 Assoc$BH<-Assoc$p_lrt/length(Assoc$p_lrt)*0.05
 which(Assoc$p_lrt<Assoc$BH)
 Assoc$p_lrt[which(Assoc$Pvl_order==1)]
+#The Wellcome Trust Case Control Consortium
+SNP_5<-which(Assoc$Manhattan>5)
+
 
 # Run snp detection for all
-par(mfrow=c(7,1),mar=c(.5,3,1,.5),oma=c(1,0,0,0))
-palette(c("grey20","grey50","grey80","grey35","grey65"))
+#par(mfrow=c(7,1),mar=c(.5,3,1,.5),oma=c(1,0,0,0))
+#palette(c("grey20","grey50","grey80","grey35","grey65"))
 for (j in 1:length(traits)) {
-  print(traits[j])
+  cat(traits[j])
   Assoc <- read.table(paste0("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_",traits[j],".assoc.txt"),h=T,sep="\t",dec=".")
   Assoc$Manhattan<-(-log10(Assoc$p_lrt))
   B_threshold<-(-log10(0.05/length(Assoc$Manhattan)))
@@ -47,6 +51,8 @@ for (j in 1:length(traits)) {
   SNP_flc<-which(Assoc$Manhattan>=flc_threshold)
   # Pollen paper p-value 10e-4
   SNP_4<-which(Assoc$Manhattan>=4)
+  # The Wellcome Trust Case Control Consortium
+  SNP_5<-which(Assoc$Manhattan>=5)
   
   #Hits if any
   snp_list<-Assoc$rs[SNP]
@@ -68,24 +74,70 @@ for (j in 1:length(traits)) {
     if (dim(snp_list)[1]>0) {
     write.table(snp_list,file = paste0("Genetics/pvl4_Hits_",traits[j],".txt"),quote = F,row.names = F,col.names = F,sep = "\t")}
   
+  # p-value > 4 hits if any
+  snp_list<-Assoc$rs[SNP_5]
+  print(length(snp_list))
+  snp_list<-Assoc[SNP_5,c("rs","chr","ps")]
+  if (dim(snp_list)[1]>0) {
+    write.table(snp_list,file = paste0("Genetics/pvl5_Hits_",traits[j],".txt"),quote = F,row.names = F,col.names = F,sep = "\t")}
+  
   # top 100
   top100<-paste0("snp_",
                  Assoc$chr[order(Assoc$Manhattan,decreasing = T)][1:100],"_",
                  Assoc$ps[order(Assoc$Manhattan,decreasing = T)][1:100])
   write.table(top100,file = paste0("Genetics/top100_",traits[j],".txt"),quote = F,row.names = F,col.names = F)
 
+  # Filter by LD...
+  # Update 16-02-2024
+  #------------------
+  snp_list<-Assoc$rs[SNP_4]
+  print(length(snp_list))
+  snp_list<-Assoc[SNP_4,c("rs","chr","ps","p_lrt")]
+  snp_list$chr<-as.factor(snp_list$chr)
+  snp_list$block<-NA 
+  # name the blocks
+  for (chr in levels(snp_list$chr )) {
+    temp<-snp_list[which(snp_list$chr==chr),]
+    temp<-temp[order(temp$ps),]
+    for (i in 1:length(temp$ps)) {
+      if (i==1) {
+        b<-1
+        block<-paste0(chr,".",b)
+        temp$block[i]<-block 
+      }else if( (temp$ps[i]-temp$ps[i-1])<10000){
+        temp$block[i]<-block
+      }else{
+        b<-b+1
+        block<-paste0(chr,".",b)
+        temp$block[i]<-block
+      }  
+    }
+  snp_list<-snp_list[-which(snp_list$chr==chr),]
+  snp_list<-rbind(temp,snp_list)
+  }
+  #filter by plrt
+  snp_list$block<-as.factor(snp_list$block)
+  for (block in levels(snp_list$block )) {
+    temp<-snp_list[which(snp_list$block==block),]
+    temp<-temp[which.min(temp$p_lrt),]
+    snp_list<-snp_list[-which(snp_list$block==block),]
+    snp_list<-rbind(temp,snp_list)
+  }
+  if (dim(snp_list)[1]>0) {
+    write.table(snp_list,file = paste0("Genetics/pvl4_LD_",traits[j],".txt"),quote = F,row.names = F,col.names = F,sep = "\t")}
+  
   # plot for Supplementary figure
-  ymax<-(B_threshold+1)
-  for(i in 2:5){Assoc$ps[which(Assoc$chr==i)]<-Assoc$ps[which(Assoc$chr==i)]+max(Assoc$ps[which(Assoc$chr==i-1)])}
-  Assoc<-Assoc[which(Assoc$Manhattan>2),]
-  plot(Assoc$ps,Assoc$Manhattan,cex=0.5,pch=16,col=Assoc$chr,ylab="",xlab="",las=1,
-       main=paste0("GWAs ",traits[j]),ylim=c(2,ymax),xaxt="n")
-  axis(side = 2,at = 3.5,labels = "-log10(P-value)",tick = F,line = 1)
-  abline(h=B_threshold,lty=2,col="darkred")
-  abline(h=flc_threshold,lty=2,col="darkblue")
-  abline(h=4,lty=2,col="black")
-  if(j %in% c(7,13)){axis(side = 1,at = max(Assoc$ps)/2,labels = "Relative position",tick = F,line = 1)
-}
+  #ymax<-(B_threshold+1)
+  #for(i in 2:5){Assoc$ps[which(Assoc$chr==i)]<-Assoc$ps[which(Assoc$chr==i)]+max(Assoc$ps[which(Assoc$chr==i-1)])}
+  #Assoc<-Assoc[which(Assoc$Manhattan>2),]
+  #plot(Assoc$ps,Assoc$Manhattan,cex=0.5,pch=16,col=Assoc$chr,ylab="",xlab="",las=1,
+  #     main=paste0("GWAs ",traits[j]),ylim=c(2,ymax),xaxt="n")
+  #axis(side = 2,at = 3.5,labels = "-log10(P-value)",tick = F,line = 1)
+  #abline(h=B_threshold,lty=2,col="darkred")
+  #abline(h=flc_threshold,lty=2,col="darkblue")
+  #abline(h=4,lty=2,col="black")
+  #if(j %in% c(7,13)){axis(side = 1,at = max(Assoc$ps)/2,labels = "Relative position",tick = F,line = 1)
+#}
 }
 
 # 2 - Plot Hits with all traits GWAs
@@ -177,6 +229,9 @@ for (i in 1:dim(hits)[1]) {
   }
 }
 
+
+
+
 # SNPs Venn diagrams
 
 # 3 - VENN DIAGRAMS
@@ -232,39 +287,43 @@ venn.diagram(
   cat.col = c("green4","greenyellow","lightblue","grey50"),
 )
 
+# Update 16 02 2024 Filter snp lists with LD
+#traits<-c("Ovule_Number",colnames(read.table("Phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T))[c(6:16,22)])[c(4:12,1:3,13)]
+#for (t in 1:length(traits)) {
+#ann<-read.table(paste0("../large_files/Ath_Petal_size/tables/annotated_simple_pvl4_Hits_",traits[t],".iHS.AD.GO.txt"),h=T)
+#tokeep<-read.table(paste0("Genetics/pvl4_LD_",traits[t],".txt"))
+#ann<-ann[which(ann$snpID %in% tokeep$V1),]
+#write.table(x = ann, file = paste0("../large_files/Ath_Petal_size/tables/annotated_simple_pvl4_LD_Hits_",traits[t],".iHS.AD.GO.txt"), quote = F, sep = "\t", row.names = F, col.names = T )
+#}
+
 # Venn diagram - GENES
 
 threshold<-c("flct","pvl4")[1]
 
 petal<-grep(pattern = "Petal",grep(pattern = threshold,list.files("../large_files/Ath_Petal_size/tables/"),value = T),value = T)
-petal<-petal[-grep(pattern = "iHS",petal)]
-petal<-petal[-grep(pattern = "ontology",petal)]
+petal<-petal[grep(pattern = "GO",petal)]
+
 sepal<-grep(pattern = "Sepal",grep(pattern = threshold,list.files("../large_files/Ath_Petal_size/tables/"),value = T),value = T)
-sepal<-sepal[-grep(pattern = "iHS",sepal)]
-sepal<-sepal[-grep(pattern = "ontology",sepal)]
+sepal<-sepal[grep(pattern = "GO",sepal)]
 
 ovule<-grep(pattern = "Ovule",grep(pattern = threshold,list.files("../large_files/Ath_Petal_size/tables/"),value = T),value = T)
-ovule<-ovule[-grep(pattern = "iHS",ovule)]
-ovule<-ovule[-grep(pattern = "ontology",ovule)]
+ovule<-ovule[grep(pattern = "GO",ovule)]
 
 stamen<-grep(pattern = "Stamen",grep(pattern = threshold,list.files("../large_files/Ath_Petal_size/tables/"),value = T),value = T)
-stamen<-stamen[-grep(pattern = "iHS",stamen)]
-stamen<-stamen[-grep(pattern = "ontology",stamen)]
+stamen<-stamen[grep(pattern = "GO",stamen)]
 
 leaf<-grep(pattern = "Leaf",grep(pattern = threshold,list.files("../large_files/Ath_Petal_size/tables/"),value = T),value = T)
-leaf<-leaf[-grep(pattern = "iHS",leaf)]
-leaf<-leaf[-grep(pattern = "ontology",leaf)]
+leaf<-leaf[grep(pattern = "GO",leaf)]
 
 ft<-grep(pattern = "flower",grep(pattern = threshold,list.files("../large_files/Ath_Petal_size/tables/"),value = T),value = T)
-ft<-ft[-grep(pattern = "iHS",ft)]
-ft<-ft[-grep(pattern = "ontology",ft)]
+ft<-ft[grep(pattern = "GO",ft)]
 
-petal_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",petal[1])),read.table(paste0("../large_files/Ath_Petal_size/tables/",petal[2])),read.table(paste0("../large_files/Ath_Petal_size/tables/",petal[3])))[,5])
-sepal_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",sepal[1])),read.table(paste0("../large_files/Ath_Petal_size/tables/",sepal[2])),read.table(paste0("../large_files/Ath_Petal_size/tables/",sepal[3])))[,5])
-ovule_list<-unique(read.table(paste0("../large_files/Ath_Petal_size/tables/",ovule[1])))[,5]
-stamen_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",stamen[1])),read.table(paste0("../large_files/Ath_Petal_size/tables/",stamen[2])) )[,5])
-leaf_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",leaf[1])),read.table(paste0("../large_files/Ath_Petal_size/tables/",leaf[2])),read.table(paste0("../large_files/Ath_Petal_size/tables/",leaf[3])))[,5])
-ft_list<-unique(read.table(paste0("../large_files/Ath_Petal_size/tables/",ft[1])))[,5]
+petal_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",petal[1]),h=T),read.table(paste0("../large_files/Ath_Petal_size/tables/",petal[2]),h=T),read.table(paste0("../large_files/Ath_Petal_size/tables/",petal[3]),h=T))[,5])
+sepal_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",sepal[1]),h=T),read.table(paste0("../large_files/Ath_Petal_size/tables/",sepal[2]),h=T),read.table(paste0("../large_files/Ath_Petal_size/tables/",sepal[3]),h=T))[,5])
+ovule_list<-unique(read.table(paste0("../large_files/Ath_Petal_size/tables/",ovule[1]),h=T))[,5]
+stamen_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",stamen[1]),h=T),read.table(paste0("../large_files/Ath_Petal_size/tables/",stamen[2]),h=T) )[,5])
+leaf_list<-unique(rbind(read.table(paste0("../large_files/Ath_Petal_size/tables/",leaf[1]),h=T),read.table(paste0("../large_files/Ath_Petal_size/tables/",leaf[2]),h=T),read.table(paste0("../large_files/Ath_Petal_size/tables/",leaf[3]),h=T))[,5])
+ft_list<-unique(read.table(paste0("../large_files/Ath_Petal_size/tables/",ft[1]),h=T))[,5]
 
 venn.diagram(
   x = list(leaf_list,sepal_list,stamen_list,petal_list),
@@ -289,7 +348,7 @@ venn.diagram(
   cat.col = c("green4","greenyellow","lightblue","grey50"),
 )
 
-intersect(ovule_list,ft_list)
+intersect(leaf_list,sepal_list)
 # Venn diagram - growth dev GENES
 
 threshold<-c("flct","pvl4")[1]
@@ -349,6 +408,6 @@ venn.diagram(
 )
 
 intersect(leaf_list,sepal_list) #"AT1G15340" "AT1G15350"
-intersect(petal_list,stamen_list) #"AT4G32400" "AT5G10920"
+intersect(petal_list,stamen_list) #"AT1G68610" "AT1G68640" "AT1G68620"
 
 

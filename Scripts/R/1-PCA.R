@@ -83,9 +83,6 @@ text(x = -2.5,y = -.3,labels = "PC1",pos=3)
 text(x = 0,y = -2.5,labels = "PC2",pos=2,srt=90)
 
 
-# TO DO make table with H2 etc
-
-
 # Fig1.B - phenotypes allometry 650 x 600
 #----------------------------------------
 

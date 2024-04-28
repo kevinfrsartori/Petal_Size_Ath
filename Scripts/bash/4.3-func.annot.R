@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 args=commandArgs(trailingOnly=T)
-#args=c("flct_Hits_Petal_Area")
+#args=c("flct_Hits_Petal_Area","/crex/proj/snic2020-16-182/A_thaliana/GWAs/Petal_Size_Ath/annotations/")
 
 ##########
 #
@@ -9,7 +9,7 @@ args=commandArgs(trailingOnly=T)
 #
 ##########
 #gene<-read.table("Genetics/annotated_simple_flct_Hits_Petal_Area.iHS.AD.txt",h=T,sep="\t")
-gene<-read.table(paste0("/crex/proj/snic2020-16-182/A_thaliana/GWAs/Petal_Size_Ath/annotations/annotated_simple_",args[1],".iHS.AD.txt"),
+gene<-read.table(paste0(args[2],"annotated_simple_",args[1],".iHS.AD.txt"),
                  h=T,sep="\t")
 
 # Gene ontology
@@ -41,10 +41,10 @@ go.obj <- new("topGOdata", ontology='BP'
               ,nodeSize = 10
 )
 results <- runTest(go.obj, algorithm = "elim", statistic = "fisher")
-results.tab <- GenTable(object = go.obj, elimFisher = results,topNodes=10)
+results.tab <- GenTable(object = go.obj, elimFisher = results,topNodes=10,numChar=100)
  # Keep gene ontology table for supplement
-write.table(x = results.tab, file = paste0("/crex/proj/snic2020-16-182/A_thaliana/GWAs/Petal_Size_Ath/annotations/gene_ontology_",args[1],".txt"),
-            quote=F,row.names = F,col.names = T)
+write.table(x = results.tab, file = paste0(args[2],"gene_ontology_",args[1],".txt"),
+            quote=F,row.names = F,col.names = T,sep="\t")
 
 # Use GOslim term to filter gene lists
 GO<-read.table("/crex/proj/snic2020-16-182/A_thaliana/REF/ATH_GO_GOSLIM.txt",skip = 4,sep="\t",fill = T,quote = "")
@@ -52,7 +52,7 @@ GO<-read.table("/crex/proj/snic2020-16-182/A_thaliana/REF/ATH_GO_GOSLIM.txt",ski
 #keep only biological process
 GO<-GO[which(GO$V8=="P"),]
 #make list for each categories
-growth_dev_GO<-levels(as.factor(GO$V9))[c(17,29,33,2,10,11,20,22)]
+growth_dev_GO<-levels(as.factor(GO$V9))[c(11,17,29,33,2,10,20,22,8)]
 flower_dev_GO<-levels(as.factor(GO$V9))[c(17)]
 
 growth_dev_genes<-unique(GO$V1[which(GO$V9 %in% growth_dev_GO)])
@@ -72,4 +72,4 @@ gene$growth_dev<-0
 gene$growth_dev[which(gene$geneID %in% growth_dev_genes)]<-1
 
 #write table
-write.table(paste0("/crex/proj/snic2020-16-182/A_thaliana/GWAs/Petal_Size_Ath/annotations//annotated_simple_",args[1],".iHS.AD.GO.txt"),sep="\t",quote = F,row.names = F,col.names = T)
+write.table(gene,paste0(args[2],"annotated_simple_",args[1],".iHS.AD.GO.txt"),sep="\t",quote = F,row.names = F,col.names = T)

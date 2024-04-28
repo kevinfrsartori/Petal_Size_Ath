@@ -375,4 +375,79 @@ sdslope<-c(summod$coefficients[2,2])
 segments(x0 = slope-sdslope, y0 = opt_gro, x1 = slope+sdslope, y1 = opt_gro, col = "black")
 points(slope, opt_gro, pch=16,col="orange")
 
+# Bi plot for SUpp figure
+#------------------------
+par(mfrow=c(3,2),mar=c(4,4,1,1))
 
+#H2016
+plot(modh2016$Petal_Area,modh2016$fitness,pch=21,col="black",bg=c("green","darkgreen")[as.factor(modh2016$Treatment)],
+     ylim=c(3,4.25),las=1,ylab="Fitness",xlab="Petal Area (mm2)")
+mod<-nlme::lme(fitness ~ Petal_Area * Treatment + Bloc, random=~1|Accession_ID, data = modh2016)
+summod<-summary(mod)
+segments(min(modh2016$Petal_Area,na.rm = T),min(modh2016$Petal_Area,na.rm = T)*summod$coefficients$fixed[2]+summod$coefficients$fixed[1],
+         max(modh2016$Petal_Area,na.rm = T),max(modh2016$Petal_Area,na.rm = T)*summod$coefficients$fixed[2]+summod$coefficients$fixed[1],
+         lwd=2,lty=1,col="darkgreen")
+segments(min(modh2016$Petal_Area,na.rm = T),min(modh2016$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[6])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[3]),
+         max(modh2016$Petal_Area,na.rm = T),max(modh2016$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[6])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[3]),
+         lwd=2,lty=1,col="green")
+#Moises
+plot(modmoises$Petal_Area,modmoises$Seeds_log,pch=21,col="black",bg=c("blue","blue4","cyan","cyan4")[as.factor(modmoises$treatment)],
+     las=1,ylab="Fitness",xlab="Petal Area (mm2)")
+mod<-nlme::lme(Seeds_log ~ Petal_Area * treatment , random=~1|id, data = modmoises)
+summod<-summary(mod)
+segments(min(modmoises$Petal_Area,na.rm = T),min(modmoises$Petal_Area,na.rm = T)*summod$coefficients$fixed[2]+summod$coefficients$fixed[1],
+         max(modmoises$Petal_Area,na.rm = T),max(modmoises$Petal_Area,na.rm = T)*summod$coefficients$fixed[2]+summod$coefficients$fixed[1],
+         lwd=2,lty=1,col="blue")
+segments(min(modmoises$Petal_Area,na.rm = T),min(modmoises$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[6])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[3]),
+         max(modmoises$Petal_Area,na.rm = T),max(modmoises$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[6])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[3]),
+         lwd=2,lty=1,col="blue4")
+segments(min(modmoises$Petal_Area,na.rm = T),min(modmoises$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[7])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[4]),
+         max(modmoises$Petal_Area,na.rm = T),max(modmoises$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[7])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[4]),
+         lwd=2,lty=1,col="cyan")
+segments(min(modmoises$Petal_Area,na.rm = T),min(modmoises$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[8])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[5]),
+         max(modmoises$Petal_Area,na.rm = T),max(modmoises$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[8])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[5]),
+         lwd=2,lty=1,col="cyan4")
+#Wilczek
+plot(modWilczek$Petal_Area,modWilczek$Fitness,pch=21,col="black",bg=c("chocolate4","firebrick3","firebrick1","rosybrown1","chocolate1")[as.factor(modWilczek$country)]
+     ,ylim=c(2,5),las=1,ylab="Fitness",xlab="Petal Area (mm2)")
+mod<-nlme::lme(Fitness ~ Petal_Area * country, random=~1|idAccession, data = modWilczek)
+summod<-summary(mod)
+segments(min(modWilczek$Petal_Area,na.rm = T),min(modWilczek$Petal_Area,na.rm = T)*summod$coefficients$fixed[2]+summod$coefficients$fixed[1],
+         max(modWilczek$Petal_Area,na.rm = T),max(modWilczek$Petal_Area,na.rm = T)*summod$coefficients$fixed[2]+summod$coefficients$fixed[1],
+         lwd=2,lty=1,col="chocolate4")
+segments(min(modWilczek$Petal_Area,na.rm = T),min(modWilczek$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[7])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[3]),
+         max(modWilczek$Petal_Area,na.rm = T),max(modWilczek$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[7])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[3]),
+         lwd=2,lty=1,col="firebrick3")
+segments(min(modWilczek$Petal_Area,na.rm = T),min(modWilczek$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[8])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[4]),
+         max(modWilczek$Petal_Area,na.rm = T),max(modWilczek$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[8])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[4]),
+         lwd=2,lty=1,col="firebrick1")
+segments(min(modWilczek$Petal_Area,na.rm = T),min(modWilczek$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[9])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[5]),
+         max(modWilczek$Petal_Area,na.rm = T),max(modWilczek$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[9])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[5]),
+         lwd=2,lty=1,col="rosybrown1")
+segments(min(modWilczek$Petal_Area,na.rm = T),min(modWilczek$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[10])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[6]),
+         max(modWilczek$Petal_Area,na.rm = T),max(modWilczek$Petal_Area,na.rm = T)*(summod$coefficients$fixed[2]+summod$coefficients$fixed[10])+(summod$coefficients$fixed[1]+summod$coefficients$fixed[6]),
+         lwd=2,lty=1,col="chocolate1")
+# Przy
+plot(modprzy$Petal_Area,modprzy$fitness,pch=21,col="black",bg="grey",las=1,ylab="Fitness",xlab="Petal Area (mm2)")
+mod<-nlme::lme(fitness ~ Petal_Area + HerbivoryIndex, random=~1|X1001g_ID, data = modprzy)
+summod<-summary(mod)
+# Vasseur
+plot(modV2018$Petal_Area,modV2018$fitness,pch=21,col="black",bg="orange",las=1,ylab="Fitness",xlab="Petal Area (mm2)")
+mod<-nlme::lme(fitness ~ Petal_Area, random=~1|idAccession, data = modV2018)
+summod<-summary(mod)
+segments(min(modV2018$Petal_Area,na.rm = T),min(modV2018$Petal_Area,na.rm = T)*summod$coefficients$fixed[2]+summod$coefficients$fixed[1],
+         max(modV2018$Petal_Area,na.rm = T),max(modV2018$Petal_Area,na.rm = T)*summod$coefficients$fixed[2]+summod$coefficients$fixed[1],
+         lwd=2,lty=1,col="orange")
+# Legend
+plot(rep(0,13),1:13,xlim=c(0,10),ylim=c(13,-1),cex=2,pch=21,col="black",bty="n",xaxt="n",yaxt="n",ylab="",xlab="",
+     bg=c("green","darkgreen","blue","blue4","cyan","cyan4","chocolate4","firebrick3","firebrick1","rosybrown1","chocolate1","grey","orange"))
+text(2,-.5,"Legend",font=2)
+text(rep(0,13),1:13,pos=4,labels=c("control","herbivory","high water","low water","high water","low water","Halle Autumn","Norwich Autumn","Norwich Spring","Norwich Summer","Valencia Autumn","Przybylska et al. 2023","Vasseur et al. 2018"))
+text(c(2.5,2.7,2.7),c(1.5,3.5,5.5),pos=4,labels=c("Unpublished","Madrid","Tuebingen"))
+segments(x0 = 2.5,y0 = 1,x1 = 2.5,y1 = 2)
+segments(x0 = 2.7,y0 = 3,x1 = 2.7,y1 = 4)
+segments(x0 = 2.7,y0 = 5,x1 = 2.7,y1 = 6)
+text(4.2,9,pos=4,"Wilczek et al. 2014")
+segments(x0 = 4.2,y0 = 7,x1 = 4.2,y1 = 11)
+text(4.5,4.5,"Exposito-Alonso et al. 2019",pos=4)
+abline(h=c(.5,2.5,6.5,11.5,12.5,13.5),col="grey")
