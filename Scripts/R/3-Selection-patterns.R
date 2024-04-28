@@ -5,7 +5,7 @@
 # 2023-12-06
 #------------------
 
-# 2a - SNP effect
+# 2a - SNP effect 600 x 200
 #----------------
 
 snpeffect <- read.table("Genetics/bslmm_flct_Petal_Area.param.txt",h=T,sep="\t",dec=".")
@@ -32,18 +32,22 @@ snpeffect_nodup<-snpeffect_nodup[-which(duplicated(snpeffect_nodup[,c("rs","iHS"
 hist(snpeffect_nodup$snpeffect)
 
 # plot
-par(mar=c(3.1,2,1,1),oma=c(0,0,0,0))
+par(mar=c(3.1,3.1,1,1),oma=c(0,0,0,0))
+par(bg = "#EAE7D7")
 a<-hist(snpeffect_nodup$snpeffect,breaks = seq(-0.01,0.01,0.0005),main = "",
-        ylim=c(0,6),xlim=range(-0.005,0.01),las=1,col = rgb(0,.7,.7),
+        ylim=c(0,6),xlim=range(-0.005,0.01),las=1,col = rgb(.85,.85,.85),
       yaxt="n",ylab="",xlab="")
 b<-hist(snpeffect_nodup$snpeffect[which(snpeffect_nodup$snpeffect > 0)],breaks = seq(-0.01,0.01,0.0005),
-        add=T,col = rgb(.9,.7,.2))
+        add=T,col = rgb(1,1,1))
 
 for (i in 1:max(a$counts)) {
   segments(x0 = a$breaks[-length(a$breaks)],y0 = a$counts-i,x1 = a$breaks[-1],y1 = a$counts-i,col="black")
 }
-axis(side = 1,at = 0.0025,labels = "Derived allele total effect size",line = 1,tick = F)
-title(main="Petal Area alleles counts")
+axis(side = 1,at = 0.0025,labels = "Derived allele total effect size",line = 1,tick = F,cex.axis=1.25)
+axis(side = 2,at = 3,labels = "Frequency",line = 1,tick = F,cex.axis=1.25)
+axis(side = 2,at = 1:6-.5,labels = 1:6,las=1)
+
+title(main="Petal Area's derived alleles effect")
 
 # which allele is selected
 # snpeffect.s<-snpeffect_nodup[which(snpeffect_nodup$iHS_pval>1),]
@@ -105,22 +109,33 @@ for (i in 1:length(traits)) {
   # make a dataset
   respie[i,2:3]<-table(sign(snpeffect_nodup$snpeffect))
 }
-# barplots
-par(mar=c(.1,4,1,1),oma=c(0,0,0,0))
+respie<-respie[c(1:9,11,12,10),]
+
+# barplots 600 x 400
+
+par(mar=c(4,1,1,1),oma=c(0,0,0,0))
+par(bg = "#EAE7D7")
+colors<-c("white","white","white","greenyellow","greenyellow","greenyellow","green4","green4","green4","lightblue","lightblue","lightpink")
 
 respie$neg_per<-(respie$negative/(respie$negative+respie$positive))*100
 respie$pos_per<-(respie$positive/(respie$negative+respie$positive))*100
-barplot(respie$pos_per,space = c(0,0,0,.2,0,0,.2,0,0,.2,.2,0),ylim = c(-100,100),
-        yaxt="n",col = rgb(.9,.7,.2))
-barplot(-respie$neg_per,space = c(0,0,0,.2,0,0,.2,0,0,.2,.2,0),
-        yaxt="n",col = rgb(0,.7,.7),add=T)
-axis(side = 2,at = c(-50,0,50), labels = c("50%","0%","50%"), las=1)
-abline(h=c(50,-50),lty=2)
-text(x=c(.5,1.5,2.5, 3.7,4.7,5.7, 6.9,7.9,8.9, 10.1, 11.3,12.3)-.3, y=(-85),srt=90,pos=4,
+
+barplot(respie$pos_per,space = c(0,0,0,.2,0,0,.2,0,0,.2,0,.2),xlim = c(-70,120),ylim=c(13,0),
+        xaxt="n",col = colors,horiz = T)
+axis(side = 1,at = 0,labels = "Sign of derived alleles' effect (relative abundance)",line = 1.5,tick = F,cex.axis=1.25)
+
+barplot(-respie$neg_per,space = c(0,0,0,.2,0,0,.2,0,0,.2,0,.2),
+        xaxt="n",col = colors,add=T,horiz = T)
+barplot(-respie$neg_per,space = c(0,0,0,.2,0,0,.2,0,0,.2,0,.2),
+        xaxt="n",col = rgb(0,0,0,.2),add=T,horiz = T)
+axis(side = 1,at = c(-50,-25,0,25,50), labels = c("50%","negative","0%","positive","50%"), las=1,tick = F)
+axis(side = 1,at = c(-50,0,50), labels = c("","",""))
+abline(v=c(50,-50),lty=2)
+
+text(y=c(.5,1.5,2.5, 3.7,4.7,5.7, 6.9,7.9,8.9, 10.1, 10.3,11.3), x=(80),srt=0,pos=4,
      labels = c("Area","Length","Width","Area","Length","Width","Area","Length","Width","","Long","Short") )
 
-text(x = c(1.5,4.7,7.9,10.1,11.8),y=c(-85,-85,-85,-75,-85),c("Petal","Sepal","Leaf","Ovule\nNumber","Stamen"),pos=1)
-segments(x0 = c(.5,3.7,6.9,11.3),y0 = -87,x1 = c(2.5,5.7,8.9,12.3),y1 = -87)
+text(y = c(1.5,4.7,7.9,10.8,12.3)-.6,x=c(95,95,95,95,80)+15,c("Petal","Sepal","Leaf","Stamen","Ovule Number"),pos=1)
 
 
 # 2c - PINPIS
@@ -133,14 +148,17 @@ pinpis$logpinpis[which(pinpis$logpinpis=="-Inf")]<-NA
 hist(pinpis$logpinpis)
 
 #  plot 500 x 400
-par(mar=c(3.1,1,1,1))
+par(mar=c(3.1,3.1,1,1))
 d<-density(x = na.omit(pinpis$logpinpis),bw = .1)
-plot(d,main = "PiN/PiS density distribution",ylim=c(-.2,.75),xlim=c(-4,2),
-     yaxt="n",xaxt="n",xlab="")
-polygon(d,col = rgb(0,.6,.6))
+plot(d,ylim=c(-.2,.75),xlim=c(-4,2),
+     main="",
+     #     main = "PiN/PiS density distribution",
+     yaxt="n",xaxt="n",xlab="",ylab = "")
+polygon(d,col = rgb(.25,.25,.25))
 
 axis(side = 1,at = c(-3,-2,-1,0,1),labels = c(0.001,0.01,0.1,1,10))
-axis(side = 1,at = -1,labels = "PiN/PiS (log scale)",line = 1,tick = F)
+axis(side = 1,at = -1,labels = "PiN/PiS (log scale)",line = 1,tick = F,cex.axis=1.25)
+axis(side = 2,at = .3,labels = "Density",line = 0,tick = F,cex.axis=1.25)
 
 petal_list<-read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t")
 candidates<-petal_list$geneID[which(petal_list$growth_dev==1)]
@@ -150,16 +168,17 @@ allgenes<-tapply(X = log10(pinpis$PinPis[which(pinpis$Gene_ID %in% petal_list$ge
                  FUN =  mean)
 
 d2<-density(allgenes,bw=.25)
-polygon(d2$x,d2$y*.6-.1,col = rgb(0,.5,.5))
+polygon(d2$x,d2$y*.6-.1,col = rgb(.75,.75,.75))
 
 d3<-density(allgenes[which(names(allgenes) %in% candidates)],bw=.25)
-polygon(d3$x,d3$y*.3-.2,col = rgb(0,.4,.4))
+polygon(d3$x,d3$y*.3-.2,col = rgb(1,1,1))
 
+abline(v=mean(pinpis$logpinpis,na.rm = T),lwd=2,lty=1,col=rgb(.25,.25,.25))
 abline(v=mean(pinpis$logpinpis,na.rm = T),lwd=2,lty=2,col="white")
 
 text(-4.2,0.02,"Whole genome",pos=4)
-text(-4.2,-.1+0.02,"Petal area genes",pos=4)
-text(-4.2,-.2+0.02,"Petal Growth Dev. genes",pos=4)
+text(-4.2,-.1+0.02,"All petal area genes",pos=4)
+text(-4.2,-.2+0.02,"Petal area candidates",pos=4)
 
 sort(allgenes)  
 sort(allgenes[which(names(allgenes) %in% candidates)])
@@ -225,8 +244,10 @@ boxplot(phenotypes$Petal_Area~phenotypes$snp_1_28960616,las=1,xlab="",
 axis(1,at = 1:2,labels = c("Ancestral","Derived"),tick = F,line = 1)
 
 
-# 3c - Petal and fitness 700 x 500
+# 3c - Petal and fitness 780 x 550
 #---------------------------------
+
+layout(mat = matrix(data = c(1,1,1,1,2,1,1,1,1,3,1,1,1,1,4,1,1,1,1,5),nrow = 4,ncol = 5,byrow = T))
 
 # Moises et al 2019 data
 phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
@@ -246,16 +267,21 @@ summod<-summary(mod)
 summod$coefficients
 
 # plot slopes
-par(mar=c(5,5,0,0),oma=c(.5,.5,.5,.5))
+par(mar=c(9,7,0,0),oma=c(0,.5,.5,.5))
 opt_gro<-summod$coefficients[1:4,1]
 slope<-c(summod$coefficients[5,1],summod$coefficients[5,1]+summod$coefficients[6:8,1])
 sdslope<-c(summod$coefficients[5:8,2])
-plot(slope,opt_gro,las=1,ylim=c(3.4,4.5),xlim=c(-.3,.05),pch=".",
-     ylab="Growing conditions optimality\n(experiment's average fitness)",
-     xlab="Fitness ~ Petal area slope")
-abline(v=0,lwd=2,col="grey",lty=2)
-segments(x0 = slope-sdslope, y0 = opt_gro, x1 = slope+sdslope, y1 = opt_gro, col = "black")
-points(slope, opt_gro, pch=16,col="blue")
+
+plot(slope~opt_gro,las=1,xlim=c(3.4,4.5),ylim=c(-.3,.3),pch=".",xaxt="n",yaxt="n",xlab="",ylab="")
+
+axis(side = 1,at = seq(3.4,4.4,.2), labels = seq(3.4,4.4,.2), cex.axis=1.5)
+axis(side = 1,at = 4,labels = "Growing conditions optimality\n(experiment's average fitness)",tick = F,line = 4,cex.axis=2)
+
+axis(side = 2,at = 0,labels = "Seed set ~ Petal area slope",tick = F,line = 3,cex.axis=2)
+axis(side = 2,at = c(-0.3,-0.2,-0.1,0,0.1,0.2,0.3), labels = c(-0.3,-0.2,-0.1,0,0.1,0.2,0.3),las=1,cex.axis=1.5)
+abline(h=0,lwd=2,col="grey",lty=2)
+segments(y0 = slope-sdslope, x0 = opt_gro, y1 = slope+sdslope, x1 = opt_gro, col = "black",lwd=3)
+points( opt_gro, slope, pch=21,bg="#17BEBB",cex=2.5,lwd=2)
 
 # Wilczek et al 2014
 phenotypes<-read.table("phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T,as.is = 1)
@@ -306,55 +332,56 @@ summod$coefficients
 opt_gro<-summod$coefficients[1:5,1]
 slope<-c(summod$coefficients[6,1],summod$coefficients[6,1]+summod$coefficients[7:10,1])
 sdslope<-c(summod$coefficients[6,2],summod$coefficients[7:10,2])
-segments(x0 = slope-sdslope, y0 = opt_gro, x1 = slope+sdslope, y1 = opt_gro, col = "black")
-points(slope, opt_gro, pch=16,col="red")
+segments(y0 = slope-sdslope, x0 = opt_gro, y1 = slope+sdslope, x1 = opt_gro, col = "black",lwd=3)
+points( opt_gro,slope, pch=21,bg="#E4572E",cex=2.5,lwd=2)
 
 # Przybylska et al. 2023
-Przybylska<-read.table("Phenotypes/rawfiles/phenotypic_datarecord.txt",h=T,sep="\t",dec=",")
-Przybylska$X1001g_ID<-as.factor(Przybylska$X1001g_ID)
-traits<-levels(as.factor(Przybylska$traitName))
-accessions<-levels(as.factor(Przybylska$X1001g_ID))
-modprzy<-na.omit(Przybylska[which(Przybylska$traitName=="fruit number"),c("X1001g_ID","traitValue","HerbivoryIndex")])
-modprzy<-na.omit(merge(modprzy,phenotypes[,c("Genotype","Petal_Area")],by.x="X1001g_ID",by.y="Genotype",all.x=T))
-modprzy$HerbivoryIndex<-as.factor(modprzy$HerbivoryIndex)
-modprzy$fitness<-log10(modprzy$traitValue*28.3)
-rm(Przybylska)
+# OUT OF THE GRAPH
+#Przybylska<-read.table("Phenotypes/rawfiles/phenotypic_datarecord.txt",h=T,sep="\t",dec=",")
+#Przybylska$X1001g_ID<-as.factor(Przybylska$X1001g_ID)
+#traits<-levels(as.factor(Przybylska$traitName))
+#accessions<-levels(as.factor(Przybylska$X1001g_ID))
+#modprzy<-na.omit(Przybylska[which(Przybylska$traitName=="fruit number"),c("X1001g_ID","traitValue","HerbivoryIndex")])
+#modprzy<-na.omit(merge(modprzy,phenotypes[,c("Genotype","Petal_Area")],by.x="X1001g_ID",by.y="Genotype",all.x=T))
+#modprzy$HerbivoryIndex<-as.factor(modprzy$HerbivoryIndex)
+#modprzy$fitness<-log10(modprzy$traitValue*28.3)
+#rm(Przybylska)
 #LME
-mod<-nlme::lme(fitness ~ Petal_Area + HerbivoryIndex, random=~1|X1001g_ID, data = modprzy)
-summod<-summary(mod)
-anova(mod)
+#mod<-nlme::lme(fitness ~ Petal_Area + HerbivoryIndex, random=~1|X1001g_ID, data = modprzy)
+#summod<-summary(mod)
+#anova(mod)
 #plot(modprzy$fitness ~ modprzy$HerbivoryIndex)
 #table(modprzy$HerbivoryIndex)
 
 # LMER
-mod<-lme4::lmer(fitness ~ Petal_Area + HerbivoryIndex + (1|X1001g_ID), data = modprzy)
-summod<-summary(mod)
-summod$coefficients
-opt_gro<-summod$coefficients[1,1]
-slope<-summod$coefficients[2,1]
-points(slope, opt_gro, pch=16,col="grey")
+#mod<-lme4::lmer(fitness ~ Petal_Area + HerbivoryIndex + (1|X1001g_ID), data = modprzy)
+#summod<-summary(mod)
+#summod$coefficients
+#opt_gro<-summod$coefficients[1,1]
+#slope<-summod$coefficients[2,1]
+#points(slope, opt_gro, pch=16,col="grey")
 
-# herbivory 2016
-h2016<-read.csv2("Phenotypes/rawfiles/Manip_Arabidopsis_Herbivory_data_BRUT_060916_final_1-ligne-par-pot.csv",
-                 h=T,dec=",",sep=";",stringsAsFactors=FALSE, fileEncoding="latin1",na.strings = ".")
-h2016<-na.omit(h2016[,c("Bloc","Treatment","Accession_ID","NbSiliquePlante")])
-h2016<-h2016[-which(h2016$Bloc=="A"),]
-modh2016<-na.omit(merge(h2016,phenotypes[,c("Genotype","Petal_Area")],by.x = "Accession_ID", by.y = "Genotype",all.x = T))
-modh2016$fitness<-log10(modh2016$NbSiliquePlante*28.3)
-rm(h2016)
+# herbivory 2016 # NOT PUBLISHED YET
+#h2016<-read.csv2("Phenotypes/rawfiles/Manip_Arabidopsis_Herbivory_data_BRUT_060916_final_1-ligne-par-pot.csv",
+#                 h=T,dec=",",sep=";",stringsAsFactors=FALSE, fileEncoding="latin1",na.strings = ".")
+#h2016<-na.omit(h2016[,c("Bloc","Treatment","Accession_ID","NbSiliquePlante")])
+#h2016<-h2016[-which(h2016$Bloc=="A"),]
+#modh2016<-na.omit(merge(h2016,phenotypes[,c("Genotype","Petal_Area")],by.x = "Accession_ID", by.y = "Genotype",all.x = T))
+#modh2016$fitness<-log10(modh2016$NbSiliquePlante*28.3)
+#rm(h2016)
 # LME
-mod<-nlme::lme(fitness ~ Petal_Area * Treatment + Bloc, random=~1|Accession_ID, data = modh2016)
-summod<-summary(mod)
-anova(mod)
+#mod<-nlme::lme(fitness ~ Petal_Area * Treatment + Bloc, random=~1|Accession_ID, data = modh2016)
+#summod<-summary(mod)
+#anova(mod)
 # LMER
-mod<-lme4::lmer(fitness ~ 0 + Treatment * Petal_Area + Bloc + (1|Accession_ID), data = modh2016)
-summod<-summary(mod)
-summod$coefficients
-opt_gro<-summod$coefficients[1:2,1]
-slope<-c(summod$coefficients[3,1],summod$coefficients[3,1]+summod$coefficients[6,1])
-sdslope<-c(summod$coefficients[3,2],summod$coefficients[6,2])
-segments(x0 = slope-sdslope, y0 = opt_gro, x1 = slope+sdslope, y1 = opt_gro, col = "black")
-points(slope, opt_gro, pch=16,col="green")
+#mod<-lme4::lmer(fitness ~ 0 + Treatment * Petal_Area + Bloc + (1|Accession_ID), data = modh2016)
+#summod<-summary(mod)
+#summod$coefficients
+#opt_gro<-summod$coefficients[1:2,1]
+#slope<-c(summod$coefficients[3,1],summod$coefficients[3,1]+summod$coefficients[6,1])
+#sdslope<-c(summod$coefficients[3,2],summod$coefficients[6,2])
+#segments(x0 = slope-sdslope, y0 = opt_gro, x1 = slope+sdslope, y1 = opt_gro, col = "black")
+#points(slope, opt_gro, pch=16,col="green")
 
 #vasseur 2018
 V2018<-read.table("Phenotypes/rawfiles/Vasseur2018.csv",sep=",",h=T)
@@ -372,8 +399,15 @@ summod$coefficients
 opt_gro<-summod$coefficients[1,1]
 slope<-summod$coefficients[2,1]
 sdslope<-c(summod$coefficients[2,2])
-segments(x0 = slope-sdslope, y0 = opt_gro, x1 = slope+sdslope, y1 = opt_gro, col = "black")
-points(slope, opt_gro, pch=16,col="orange")
+segments(y0 = slope-sdslope, x0 = opt_gro, y1 = slope+sdslope, x1 = opt_gro, col = "black",lwd=3)
+points(opt_gro, slope, pch=21,bg="#FFC914",cex=2.5,lwd=2)
+
+# mini plots for explanation
+par(mar=c(1,1,1,1))
+
+plot(0:1,0:1,type="l",xlim=c(0,1),ylim=c(-.5,1.5),lwd=2,xaxt="n",yaxt="n",xlab = "",ylab="")
+plot(0:1,c(.5,.5),type="l",xlim=c(0,1),ylim=c(-.5,1.5),lwd=2,xaxt="n",yaxt="n",xlab = "",ylab="")
+plot(0:1,1:0,type="l",xlim=c(0,1),ylim=c(-.5,1.5),lwd=2,xaxt="n",yaxt="n",xlab = "",ylab="")
 
 # Bi plot for SUpp figure
 #------------------------
