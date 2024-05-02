@@ -303,7 +303,7 @@ v <- c(
   grconvertX(u[1:2], "user", "ndc"),
   grconvertY(u[3:4], "user", "ndc")
 )
-v <- c( (v[1]+v[2])/2, v[2], (v[3]+v[4])/2.5, v[4] )
+v <- c( (v[1]+v[2])/2.3, v[2], (v[3]+v[4])/2.3, v[4] )
 par( fig=v, new=TRUE, mar=c(3,3,0,0) )
 library(e1071)
 handtable<-handtable[,1:9]
@@ -340,7 +340,7 @@ v <- c(
   grconvertX(u[1:2], "user", "ndc"),
   grconvertY(u[3:4], "user", "ndc")
 )
-v <- c( (v[1]+v[2])/2, v[2], (v[3]+v[4])/2.5, v[4] )
+v <- c( (v[1]+v[2])/2.3, v[2], (v[3]+v[4])/2.3, v[4] )
 par( fig=v, new=TRUE, mar=c(3,3,0,0) )
 library(e1071)
 handtable<-handtable[,1:9]
