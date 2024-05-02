@@ -21,7 +21,7 @@ hscol<-colorRampPalette(rev(viridis::inferno(4)))
 #plot(HS$layer,col=hscol(255),las=1) # whole
 plot(HSath$layer,col=hscol(255),las=1, legend=F) # cropped
 # studied accessions
-acc<-na.omit(read.table("Genetics/studied_acc.txt"))Marrakech
+acc<-na.omit(read.table("Genetics/studied_acc.txt"))
 g1001<-na.omit(read.table("Genetics/accessions.txt",h=F,sep=",",as.is = 4)[,c(1,6,7,11)])
 colnames(g1001)<-c("accession_name","latitude","longitude","group")
 g1001<-g1001[which(g1001$accession_name %in% acc$V1),]
@@ -52,7 +52,8 @@ HSath<-crop(HS, ath_dist)
 hscol<-colorRampPalette(rev(viridis::inferno(4)))
 #plot(HS$layer,col=hscol(255),las=1) # whole
 plot(HSath$layer,col=hscol(255),las=1, legend=F) # cropped
-# Limiting factors
+
+#For supp: Limiting factors
 lim<-raster("../large_files/Ath_Petal_size/habitat_suitability/Niche_modelling/Limiting_facgtors_Ath_2023-07-07.grd")
 # visualize the map
 longname<-c("isothermality","Temp_coldest_month","Annual_temp_range","Temp_wettest_quarter","Temp_warmest_quarter","Prec_seasonality","Prec_wettest_quarter","Prec_driest_quarter","Altitude")
@@ -65,6 +66,13 @@ levelplot(limath,col.regions=mycol,att="ID",colorkey=F)
 
 lim<-ratify(lim)
 levelplot(lim,col.regions=mycol,att="ID",colorkey=F)
+
+lim<-ratify(limath)
+levelplot(limath,col.regions=mycol,att="ID",colorkey=F)
+
+lim<-terra::mask(lim,mask = europe)
+levelplot(lim,col.regions=mycol,att="ID",colorkey=F)
+
 
 # Legend
 plot(rep(0,9),1:9,xlim=c(0,10),ylim=c(9,-1),cex=3,pch=22,col="black",bty="n",xaxt="n",yaxt="n",ylab="",xlab="",
