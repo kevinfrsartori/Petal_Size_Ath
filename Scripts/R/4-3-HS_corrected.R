@@ -281,18 +281,78 @@ axis(side = 2,at = .125,labels = "Large Petal Allele frequency",tick = F,line = 
 #axis(side = 2,at = .125,labels = "Large Petal Allele frequency",tick = F,line = 2)
 
 
-# Panel D - SFS-HS 500 x 300
+# Panel D - SFS-HS 450 x 600
 #-----------------
-handtable<-as.matrix(read.table("Genetics/sfs/DAF_table_rel.95_.1to.5.txt"))
+dev.off()
+par(mfrow=c(1,1))
+
+# PETAL
+trait="Petal"
+handtable<-as.matrix(read.table(paste0("Genetics/sfs/unfolded_SFS_",trait,".txt")))
 colnames(handtable)<-substr(colnames(handtable),2,5)
 #shade<-gray.colors(10,start = .8,end = .2,gamma = 1)
 hscol<-colorRampPalette(rev(viridis::inferno(4)))
-par(mfrow=c(1,1),mar=c(1,1,1,0), oma=c(1,2,0,0))
-barplot(height = handtable[,1:9],beside = T,col=hscol(20)[6:15],las=1,main = "",yaxt="n",xaxt="n")
-#legend(x = 70,y = 4e+05,legend = rownames(handtable),fill = shade,cex = .75,ncol = 2)
-axis(side = 1, at = 45, labels = "Allele frequency",tick = F,line = 0)
-axis(side = 2, at = 0:4*100000, labels = 0:4, las=1)
-axis(side = 2, at = 2e+05,labels = "Allele count (x100.000)",tick = F,line = 1)
-axis(side = 1, at = seq(0,88,11)+6, labels = paste0("<",substr(seq(.1,.5,.05),2,4)),line=-1,tick = F)
+par(mar=c(4,4,4,0),oma=c(.1,.1,.1,.1))
+barplot(height = handtable[,1:4],beside = T,col=hscol(20)[6:15],las=1,
+        main = paste0(trait," genes (", sum(handtable[1,]), " SNPs)" ),ylim=c(0,1000),
+        names.arg = paste0("<",colnames(handtable[,1:4])),
+        xlab = "Allele frequency",ylab="Allele count")
+
+u <- par("usr")
+v <- c(
+  grconvertX(u[1:2], "user", "ndc"),
+  grconvertY(u[3:4], "user", "ndc")
+)
+v <- c( (v[1]+v[2])/2, v[2], (v[3]+v[4])/2.5, v[4] )
+par( fig=v, new=TRUE, mar=c(3,3,0,0) )
+library(e1071)
+handtable<-handtable[,1:9]
+plot(x = 1:10, y = apply(X = handtable, MARGIN = 1, FUN = skewness),ylim=c(1,2),
+     las=1,ylab="skewness",xlab="HS",pch=21,bg=hscol(20)[6:15],cex=2,yaxt="n",xaxt="n")
+axis(side = 2,at = c(1,2), labels = c(1,2), las=1)
+axis(side = 2,at = 1.5, labels = "SFS Skewness", tick = F)
+axis(side = 1,at = c(1,10), labels = c(1,10),tick = F)
+axis(side = 1,at = 1:10, labels = c("","","","","","","","","",""))
+axis(side = 1,at = 5.5, labels = "HS", tick = F)
 
 
+y<-apply(X = handtable, MARGIN = 1, FUN = skewness)
+x<-1:10
+reg<-summary(lm(y~x))
+
+segments(x0 = 1,y0 = reg$coefficients[1,1]+reg$coefficients[2,1]*1,x1 = 10,y1 = reg$coefficients[1,1]+reg$coefficients[2,1]*10, lwd = 2)
+
+#LEAF
+dev.off()
+trait="Leaf"
+handtable<-as.matrix(read.table(paste0("Genetics/sfs/unfolded_SFS_",trait,".txt")))
+colnames(handtable)<-substr(colnames(handtable),2,5)
+#shade<-gray.colors(10,start = .8,end = .2,gamma = 1)
+hscol<-colorRampPalette(rev(viridis::inferno(4)))
+par(mar=c(4,4,4,0),oma=c(.1,.1,.1,.1))
+barplot(height = handtable[,1:4],beside = T,col=hscol(20)[6:15],las=1,
+        main = paste0(trait," genes (", sum(handtable[1,]), " SNPs)" ),ylim=c(0,1000),
+        names.arg = paste0("<",colnames(handtable[,1:4])),
+        xlab = "Allele frequency",ylab="Allele count")
+
+u <- par("usr")
+v <- c(
+  grconvertX(u[1:2], "user", "ndc"),
+  grconvertY(u[3:4], "user", "ndc")
+)
+v <- c( (v[1]+v[2])/2, v[2], (v[3]+v[4])/2.5, v[4] )
+par( fig=v, new=TRUE, mar=c(3,3,0,0) )
+library(e1071)
+handtable<-handtable[,1:9]
+plot(x = 1:10, y = apply(X = handtable, MARGIN = 1, FUN = skewness),ylim=c(1,2),
+     las=1,ylab="skewness",xlab="HS",pch=21,bg=hscol(20)[6:15],cex=2,yaxt="n",xaxt="n")
+axis(side = 2,at = c(1,2), labels = c(1,2), las=1)
+axis(side = 2,at = 1.5, labels = "SFS Skewness", tick = F)
+axis(side = 1,at = c(1,10), labels = c(1,10),tick = F)
+axis(side = 1,at = 1:10, labels = c("","","","","","","","","",""))
+axis(side = 1,at = 5.5, labels = "HS", tick = F)
+y<-apply(X = handtable, MARGIN = 1, FUN = skewness)
+x<-1:10
+reg<-summary(lm(y~x))
+
+segments(x0 = 1,y0 = mean(y),x1 = 10,y1 = mean(y), lwd = 2, lty = 2)
