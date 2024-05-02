@@ -5,7 +5,7 @@
 # 2024-01-02
 #------------------
 
-# Panel A - Habitat suitability map 380 x 320
+# Panel A - Habitat suitability map 650 x 500
 #----------------------------------
 par(mar=c(3,3,2,0),oma=c(0,0,0,0))
 library(raster)
@@ -21,12 +21,27 @@ hscol<-colorRampPalette(rev(viridis::inferno(4)))
 #plot(HS$layer,col=hscol(255),las=1) # whole
 plot(HSath$layer,col=hscol(255),las=1, legend=F) # cropped
 # studied accessions
-acc<-na.omit(read.table("Genetics/studied_acc.txt"))
+acc<-na.omit(read.table("Genetics/studied_acc.txt"))Marrakech
 g1001<-na.omit(read.table("Genetics/accessions.txt",h=F,sep=",",as.is = 4)[,c(1,6,7,11)])
 colnames(g1001)<-c("accession_name","latitude","longitude","group")
 g1001<-g1001[which(g1001$accession_name %in% acc$V1),]
 # plot the studied sites on the map
 points(g1001$longitude,g1001$latitude,pch=21,col=rgb(0,.6,.6),cex=.8,lwd=2)
+
+# Crop seas out
+countries<-c("albania","andorra","austria","belarus","belgium","bosnia and herzegovina","bulgaria","croatia","cyprus","czech republic","denmark","Syria",
+  "estonia","finland","france","germany","greece","hungary","iceland","ireland","italy","latvia","liechtenstein","lithuania","iran","kazakhstan","iraq",
+  "luxembourg","malta","moldova","monaco","montenegro","netherlands","macedonia","norway","poland","portugal","kosovo","georgia","armenia","azerbaijan",
+  "romania","russia","san marino","republic of serbia","slovakia","slovenia","spain","sweden","switzerland","ukraine","united kingdom","turkey","Morocco","Algeria","Tunisia")
+europe<-rnaturalearth::ne_states(countries,returnclass = "sf")
+HSathEU<-terra::mask(HSath,mask = europe)
+
+hscol<-colorRampPalette( rev( c( viridis::inferno(4)[c(1,2,3,4,4)], "#FFFFFF" ) ) )
+plot(HSathEU,col=hscol(255),las=1, legend=T) # cropped,
+
+#points(g1001$longitude,g1001$latitude,pch=21,bg="white",cex=1)
+#points(g1001$longitude,g1001$latitude,pch=21,bg=rgb(0,0,0,0),col=rgb(0,.6,.6),cex=1,lwd=2)
+points(g1001$longitude,g1001$latitude,pch=21,bg=rgb(0,.6,.6),cex=1)
 
 # For Supp, full map
 # crop ylim=c(15,70),xlim=c(-150,150)
@@ -64,7 +79,7 @@ phenotypes<-merge(phenotypes,limiting,by.x="Genotype",by.y="accession_name",all.
 levels(as.factor(phenotypes$LF))
 
 
-longname<-rev(c("isothermality","Temp_coldest_month","Annual_temp_range","Temp_wettest_quarter","Temp_warmest_quarter","Prec_seasonality","Prec_wettest_quarter","Prec_driest_quarter","Altitude"))
+longname<-rev(c("isothermality","Temp_coldest_month","A,nnual_temp_range","Temp_wettest_quarter","Temp_warmest_quarter","Prec_seasonality","Prec_wettest_quarter","Prec_driest_quarter","Altitude"))
 mycol=rev(c("purple","coral","wheat4","coral3","coral4","slategray2","skyblue2","skyblue4","black"))
 phenotypes$LF<-factor(x = phenotypes$LF,levels = longname)
 par(mar=c(4,10,1,1))
@@ -78,7 +93,7 @@ glht_mod<-glht(anova, linfct=mcp(LF="Tukey"))
 letters<-cld(glht_mod)$mcletters$Letters
 text(0,c(1,2,3,4,7,8,9),letters,pos=4)
 
-# Panel B - Trait-HS relationship 320 x 320
+# Panel B - Trait-HS relationship 500 x 500
 #--------------------------------
 
 library(quantreg)
@@ -92,11 +107,11 @@ habsuit<-read.table("Niche_Modelling/accessions_1001g_habitatsuitability.csv",h=
 habsuit<-habsuit[-which(habsuit$HS < 0.2),]
 phenotypes<-merge(phenotypes,habsuit,by.x="Genotype",by.y="accession_name",all.x=T)
 # Biplot Petal Area ~ habitat suitability
-par(mar=c(4,4,0,0))
+par(mar=c(4,5.5,.1,.1))
 layout(matrix(c(1,1,1,1,2,3,4,5),byrow = T,nrow=2),heights = c(2,1))
 
-plot(phenotypes$Petal_Area~phenotypes$HS,pch=21,lwd=1,bg=rgb(0,.6,.6),cex=1.5,
-     xlab="Habitat suitability",ylab="Petal Area")
+plot(phenotypes$Petal_Area~phenotypes$HS,pch=21,lwd=1,bg=rgb(0,.6,.6),cex.axis=2,las=1,cex=1.5,
+     xlab="Habitat suitability",ylab=expression(Petal ~ Area ~ (mm^2)),cex.lab=2)
 # linear model
 summod<-summary(lm(phenotypes$Petal_Area~phenotypes$HS))
 summod$coefficients
@@ -167,7 +182,7 @@ dataset<-phenotypes[,traits]
 (res<-datapie(traits,dataset))
 palette(c(rgb(0,0,1),rgb(.6,.6,1),rgb(0,0,0),rgb(.6,.6,.6),rgb(1,0,0),rgb(1,.6,.6),rgb(1,1,1)))
 pie(table(res$type),col = palette(),labels = sub("0"," ",table(res$type)))
-axis(side = 1,at = 0,labels = "This study",tick = F,line = -2)
+axis(side = 1,at = 0,labels = "This study",tick = F,line = -2,cex.axis=1.5)
 # 2.2 - 107 phenotypes from Atwell et al. 2010
 pheno107<-read.table("Phenotypes/rawfiles/phenotypes107_gmeans.csv",h=T,sep=",")
 pheno107<-merge(pheno107,habsuit[,c(1,5)],by.x="accession_id",by.y="accession_name",all.x=T)
@@ -176,7 +191,7 @@ dataset<-pheno107[,traits]
 (res<-datapie(traits = traits,dataset = dataset))
 palette(c(rgb(0,0,1),rgb(.6,.6,1),rgb(0,0,0),rgb(.6,.6,.6),rgb(1,0,0),rgb(1,.6,.6),rgb(1,1,1)))
 pie(table(res$type),col = palette(),labels = sub("0"," ",table(res$type)))
-axis(side = 1,at = 0,labels = "Atwell et al. 2010",tick = F,line = -2)
+axis(side = 1,at = 0,labels = "Atwell et al. 2010",tick = F,line = -2,cex.axis=1.5)
 # 2.3 - Przybylska et al. 2023
 Przybylska<-read.table("Phenotypes/rawfiles/phenotypic_datarecord.txt",h=T,sep="\t",dec=",")
 Przybylska$X1001g_ID<-as.factor(Przybylska$X1001g_ID)
@@ -194,89 +209,17 @@ dataset<-dataset[,traits]
 (res<-datapie(traits = traits,dataset = dataset))
 palette(c(rgb(0,0,1),rgb(.6,.6,1),rgb(0,0,0),rgb(.6,.6,.6),rgb(1,0,0),rgb(1,.6,.6),rgb(1,1,1)))
 pie(table(res$type),col = palette(),labels = sub("0"," ",table(res$type)))
-axis(side = 1,at = 0,labels = "Przybylska et al. 2023",tick = F,line = -2)
+axis(side = 1,at = 0,labels = "Przybylska et al. 2023",tick = F,line = -2,cex.axis=1.5)
 # Legend
 par(mar=c(0,0,0,0))
 plot(rep(1,7),1:7,xlim=c(0,10),ylim=c(0,9),pch=22,bg=rev(palette()),cex=4,bty="n",xaxt="n",yaxt="n")
-text(x = c(rep(2,7),1),y = c(1:7,8.5), pos=4, labels=c(rev(levels(res$type)),"Legend"),font=c(rep(1,7),2))
+type<-c("untested","positive","pos. triangular","flat","flat triangular","negative","neg. triangular")
+text(x = c(rep(2,7),1),y = c(1:7,8.5), pos=4, labels=c(type,"Legend"),font=c(rep(1,7),2),cex=1.5)
 
 
-# Panel C - PiN/PiS-HS relationship 320 x 280 
-#----------------------------------
-hsranges<-c(paste0("HS0",1:9),"HS10")
-pinpis<-read.table("../large_files/Ath_Petal_size/pinpis/outputs/wholegenome_pinpis_HS01.txt",h=T,na.strings = c("NA","Inf","-Inf"))
-pinpis$log10_PinPis<-log10(pinpis$PinPis)
-pinpis$log10_PinPis[which(pinpis$log10_PinPis==-Inf)]<-NA
+dev.off()
 
-
-hist(pinpis$log10_PinPis)
-library(vioplot)
-plot(0, 0, xlim=c(.5,10.5), ylim=c(-3,1.5), las=1,xaxt="n",yaxt="n",
-     xlab="Habitat suitability ranges",ylab="PiN/PiS (log scale)")
-axis(side = 1, at = 1:10, labels = hsranges, las=2)
-axis(side = 2, at = c(-3,-2,-1,0,1,2), labels = c(0.001,0.01,0.1,1,10,100),las=1)
-
-for (i in 1:10) {
-  pinpis<-read.table(paste0("../large_files/Ath_Petal_size/pinpis/outputs/wholegenome_pinpis_",hsranges[i],".txt"),
-                     h=T,na.strings = c("NA","Inf","-Inf"))
-  pinpis$log10_PinPis<-log10(pinpis$PinPis)
-  pinpis$log10_PinPis[which(pinpis$log10_PinPis==-Inf)]<-NA
-  
-  vioplot(pinpis$log10_PinPis,add = T,at = i, 
-        col = "grey85", border = "grey50", rectCol = "grey85", lineCol = "grey30")
-}
-
-# relaxed_pinpis petal genes
-genelist<-c("AT4G32290","AT1G36940","AT4G32295","AT1G77080")
-# petal area genes
-genes <- read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t")
-
-
-
-pinpis_pg<-matrix(data = NA,nrow = length(genelist), ncol = 10, dimnames = list(genelist,hsranges))
-for (i in 1:10) {
-  pinpis<-read.table(paste0("../large_files/Ath_Petal_size/pinpis/outputs/wholegenome_pinpis_",hsranges[i],".txt"),
-                                               h=T,na.strings = c("NA","Inf","-Inf"))
-  pinpis$log10_PinPis<-log10(pinpis$PinPis)
-  pinpis$log10_PinPis[which(pinpis$log10_PinPis %in% c(-Inf,NaN))]<-NA
-  pinpis<-pinpis[which(pinpis$Gene_ID %in% genelist),]
-  pinpis$Gene_ID<-factor(x = pinpis$Gene_ID,levels = genelist)
-  pinpis_petalgenes<-tapply(X = pinpis$log10_PinPis,INDEX = pinpis$Gene_ID,FUN = mean,na.rm=T)
-  pinpis_pg[,i]<-pinpis_petalgenes
-}
-
-apply(pinpis_pg,MARGIN = 2, FUN = mean, na.rm=T)
-
-# vioplot for bootstrapped genes
-par(mfrow=c(2,3),oma=c(2,2,0,0),mar=c(1,2,1,1))
-mycol=c(rep(rgb(0,.6,.5),5),rgb(.7,.4,.3))
-for(i in 1:dim(annot)[1]){
-  piehsgene<-read.table(paste0("../large_files/Ath_Petal_size/pinpis/outputs/result_",annot$gene_ID[i],".1.txt"),h=T)
-  piehsgene$log10_PinPis<-log10(piehsgene$PinPis)
-  piehsgene$log10_PinPis[which(piehsgene$log10_PinPis==-Inf)]<-NA
-  piehsgene$log10_PinPis[which(piehsgene$log10_PinPis==Inf)]<-NA
-  vioplot(piehsgene$log10_PinPis ~ piehsgene$HS,xaxt="n",las=1,col=mycol[i])
-  axis(side = 1,at = 1:10,labels = rep("",10))
-  title(main = annot$gene_name[i],outer = )
-}
-title(xlab = "Habitat suitability ranges",ylab="PiN/PiS (log10)",outer = T,line = 1,cex.lab=1)
-
-
-# Panel D - SFS-HS 500 x 300
-#-----------------
-handtable<-as.matrix(read.table("Genetics/sfs/DAF_table_rel.95_.1to.5.txt"))
-colnames(handtable)<-substr(colnames(handtable),2,5)
-#shade<-gray.colors(10,start = .8,end = .2,gamma = 1)
-hscol<-colorRampPalette(rev(viridis::inferno(4)))
-par(mfrow=c(1,1),mar=c(1,1,1,0), oma=c(1,2,0,0))
-barplot(height = handtable[,1:9],beside = T,col=hscol(20)[6:15],las=1,main = "",yaxt="n",xaxt="n")
-#legend(x = 70,y = 4e+05,legend = rownames(handtable),fill = shade,cex = .75,ncol = 2)
-axis(side = 1, at = 45, labels = "Allele frequency",tick = F,line = 0)
-axis(side = 2, at = 0:4*100000, labels = 0:4, las=1)
-axis(side = 2, at = 2e+05,labels = "Allele count (x100.000)",tick = F,line = 1)
-axis(side = 1, at = seq(0,88,11)+6, labels = paste0("<",substr(seq(.1,.5,.05),2,4)),line=-1,tick = F)
-
-# Panel E - Large petal allele freq-HS 500 x 250
+# Panel D - Large petal allele freq-HS 350 x 200
 #-------------------------------------
 # allele 0 versus 1 recovered from glm data
 assoc<-read.table("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_Petal_Area.assoc.txt",h=T,sep="\t",dec=".")
@@ -317,43 +260,39 @@ axis(side = 1,at = 1:10-.5,labels = rep("",10),las=2)
 axis(side = 1,at = 5,labels = "less          -          Habitat suitability          -          more",tick = F,line = 0)
 axis(side = 2,at = .125,labels = "Large Petal Allele frequency",tick = F,line = 2)
 
-# Barplot derived large petal alleles
-ancestry <- na.omit(read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t"))
+  # Barplot derived large petal alleles #NOT USED
+#ancestry <- na.omit(read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t"))
 # Filter SNPs
 # 1-Keep one snp per gene, the one with longest haplotype
-ancestry<-ancestry[order(ancestry$iHS_pval,decreasing = T),]
-ancestry<-ancestry[-which(duplicated(ancestry$geneID)),]
+#ancestry<-ancestry[order(ancestry$iHS_pval,decreasing = T),]
+#ancestry<-ancestry[-which(duplicated(ancestry$geneID)),]
 # 2-Keep one representative per SNP if ancestry is conserved
-ancestry<-ancestry[-which(duplicated(ancestry[,c("snpID","iHS")])),]
+#ancestry<-ancestry[-which(duplicated(ancestry[,c("snpID","iHS")])),]
 
-snpeffect<-merge(snpeffect,ancestry[,c(1,10)],by.x="rs",by.y="snpID",all.x=T)
-snpeffect<-snpeffect[which(snpeffect$large_petal_allele == snpeffect$DER),]
+#snpeffect<-merge(snpeffect,ancestry[,c(1,10)],by.x="rs",by.y="snpID",all.x=T)
+#snpeffect<-snpeffect[which(snpeffect$large_petal_allele == snpeffect$DER),]
 
-par(mar=c(1,1,1,1), oma=c(2,3,0,0))
-large_petal_allele_frq_per_hsrange<-apply(snpeffect[,grep("HS",colnames(snpeffect))],MARGIN = 2,FUN = sum,na.rm=T)/length(na.omit(snpeffect$large_petal_allele_frq_HS01))
+#par(mar=c(1,1,1,1), oma=c(2,3,0,0))
+#large_petal_allele_frq_per_hsrange<-apply(snpeffect[,grep("HS",colnames(snpeffect))],MARGIN = 2,FUN = sum,na.rm=T)/length(na.omit(snpeffect$large_petal_allele_frq_HS01))
+#hscol<-colorRampPalette(rev(viridis::inferno(4)))
+#barplot(large_petal_allele_frq_per_hsrange,ylim=c(0.1,.25),xpd=F,las=1,col=hscol(20)[6:15],space=0,xaxt="n")
+#axis(side = 1,at = 1:10-.5,labels = rep("",10),las=2)
+#axis(side = 1,at = 5,labels = "less          -          Habitat suitability          -          more",tick = F,line = 0)
+#axis(side = 2,at = .125,labels = "Large Petal Allele frequency",tick = F,line = 2)
+
+
+# Panel D - SFS-HS 500 x 300
+#-----------------
+handtable<-as.matrix(read.table("Genetics/sfs/DAF_table_rel.95_.1to.5.txt"))
+colnames(handtable)<-substr(colnames(handtable),2,5)
+#shade<-gray.colors(10,start = .8,end = .2,gamma = 1)
 hscol<-colorRampPalette(rev(viridis::inferno(4)))
-barplot(large_petal_allele_frq_per_hsrange,ylim=c(0.1,.25),xpd=F,las=1,col=hscol(20)[6:15],space=0,xaxt="n")
-axis(side = 1,at = 1:10-.5,labels = rep("",10),las=2)
-axis(side = 1,at = 5,labels = "less          -          Habitat suitability          -          more",tick = F,line = 0)
-axis(side = 2,at = .125,labels = "Large Petal Allele frequency",tick = F,line = 2)
-
-
-
-
-
-#...
-
-# MAF1
-plot(x = 1:10, y = as.numeric(snpeffect[which(snpeffect$rs=="snp_1_28960616"),12:21]) )
-# JMJ18
-plot(x = 1:10, y = as.numeric(snpeffect[which(snpeffect$rs=="snp_1_10937139"),12:21]) )
-# AT5G03480 
-plot(x = 1:10, y = as.numeric(snpeffect[which(snpeffect$rs=="snp_5_870273"),12:21]) )
-
-
-# Panel F - Petal genes-HS 500 x 250
-#
-# 1st choice: all annotated genes
-genelist <- unique(read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t")[,4])
+par(mfrow=c(1,1),mar=c(1,1,1,0), oma=c(1,2,0,0))
+barplot(height = handtable[,1:9],beside = T,col=hscol(20)[6:15],las=1,main = "",yaxt="n",xaxt="n")
+#legend(x = 70,y = 4e+05,legend = rownames(handtable),fill = shade,cex = .75,ncol = 2)
+axis(side = 1, at = 45, labels = "Allele frequency",tick = F,line = 0)
+axis(side = 2, at = 0:4*100000, labels = 0:4, las=1)
+axis(side = 2, at = 2e+05,labels = "Allele count (x100.000)",tick = F,line = 1)
+axis(side = 1, at = seq(0,88,11)+6, labels = paste0("<",substr(seq(.1,.5,.05),2,4)),line=-1,tick = F)
 
 

@@ -297,3 +297,65 @@ for(i in 1:dim(annot)[1]){
   title(main = annot$gene_name[i],outer = )
 }
 title(xlab = "Habitat suitability ranges",ylab="PiN/PiS (log10)",outer = T,line = 1,cex.lab=1)
+
+
+
+# Panel C - PiN/PiS-HS relationship NOT USED
+#----------------------------------
+hsranges<-c(paste0("HS0",1:9),"HS10")
+pinpis<-read.table("../large_files/Ath_Petal_size/pinpis/outputs/wholegenome_pinpis_HS01.txt",h=T,na.strings = c("NA","Inf","-Inf"))
+pinpis$log10_PinPis<-log10(pinpis$PinPis)
+pinpis$log10_PinPis[which(pinpis$log10_PinPis==-Inf)]<-NA
+
+
+hist(pinpis$log10_PinPis)
+library(vioplot)
+plot(0, 0, xlim=c(.5,10.5), ylim=c(-3,1.5), las=1,xaxt="n",yaxt="n",
+     xlab="Habitat suitability ranges",ylab="PiN/PiS (log scale)")
+axis(side = 1, at = 1:10, labels = hsranges, las=2)
+axis(side = 2, at = c(-3,-2,-1,0,1,2), labels = c(0.001,0.01,0.1,1,10,100),las=1)
+
+for (i in 1:10) {
+  pinpis<-read.table(paste0("../large_files/Ath_Petal_size/pinpis/outputs/wholegenome_pinpis_",hsranges[i],".txt"),
+                     h=T,na.strings = c("NA","Inf","-Inf"))
+  pinpis$log10_PinPis<-log10(pinpis$PinPis)
+  pinpis$log10_PinPis[which(pinpis$log10_PinPis==-Inf)]<-NA
+  
+  vioplot(pinpis$log10_PinPis,add = T,at = i, 
+          col = "grey85", border = "grey50", rectCol = "grey85", lineCol = "grey30")
+}
+
+# relaxed_pinpis petal genes
+genelist<-c("AT4G32290","AT1G36940","AT4G32295","AT1G77080")
+# petal area genes
+genes <- read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t")
+
+
+
+pinpis_pg<-matrix(data = NA,nrow = length(genelist), ncol = 10, dimnames = list(genelist,hsranges))
+for (i in 1:10) {
+  pinpis<-read.table(paste0("../large_files/Ath_Petal_size/pinpis/outputs/wholegenome_pinpis_",hsranges[i],".txt"),
+                     h=T,na.strings = c("NA","Inf","-Inf"))
+  pinpis$log10_PinPis<-log10(pinpis$PinPis)
+  pinpis$log10_PinPis[which(pinpis$log10_PinPis %in% c(-Inf,NaN))]<-NA
+  pinpis<-pinpis[which(pinpis$Gene_ID %in% genelist),]
+  pinpis$Gene_ID<-factor(x = pinpis$Gene_ID,levels = genelist)
+  pinpis_petalgenes<-tapply(X = pinpis$log10_PinPis,INDEX = pinpis$Gene_ID,FUN = mean,na.rm=T)
+  pinpis_pg[,i]<-pinpis_petalgenes
+}
+
+apply(pinpis_pg,MARGIN = 2, FUN = mean, na.rm=T)
+
+# vioplot for bootstrapped genes
+par(mfrow=c(2,3),oma=c(2,2,0,0),mar=c(1,2,1,1))
+mycol=c(rep(rgb(0,.6,.5),5),rgb(.7,.4,.3))
+for(i in 1:dim(annot)[1]){
+  piehsgene<-read.table(paste0("../large_files/Ath_Petal_size/pinpis/outputs/result_",annot$gene_ID[i],".1.txt"),h=T)
+  piehsgene$log10_PinPis<-log10(piehsgene$PinPis)
+  piehsgene$log10_PinPis[which(piehsgene$log10_PinPis==-Inf)]<-NA
+  piehsgene$log10_PinPis[which(piehsgene$log10_PinPis==Inf)]<-NA
+  vioplot(piehsgene$log10_PinPis ~ piehsgene$HS,xaxt="n",las=1,col=mycol[i])
+  axis(side = 1,at = 1:10,labels = rep("",10))
+  title(main = annot$gene_name[i],outer = )
+}
+title(xlab = "Habitat suitability ranges",ylab="PiN/PiS (log10)",outer = T,line = 1,cex.lab=1)
