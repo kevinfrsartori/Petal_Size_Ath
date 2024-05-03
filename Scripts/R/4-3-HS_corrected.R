@@ -29,13 +29,8 @@ g1001<-g1001[which(g1001$accession_name %in% acc$V1),]
 points(g1001$longitude,g1001$latitude,pch=21,col=rgb(0,.6,.6),cex=.8,lwd=2)
 
 # Crop seas out
-countries<-c("albania","andorra","austria","belarus","belgium","bosnia and herzegovina","bulgaria","croatia","cyprus","czech republic","denmark","Syria",
-  "estonia","finland","france","germany","greece","hungary","iceland","ireland","italy","latvia","liechtenstein","lithuania","iran","kazakhstan","iraq",
-  "luxembourg","malta","moldova","monaco","montenegro","netherlands","macedonia","norway","poland","portugal","kosovo","georgia","armenia","azerbaijan",
-  "romania","russia","san marino","republic of serbia","slovakia","slovenia","spain","sweden","switzerland","ukraine","united kingdom","turkey","Morocco","Algeria","Tunisia")
-europe<-rnaturalearth::ne_states(countries,returnclass = "sf")
-HSathEU<-terra::mask(HSath,mask = europe)
-
+nosea<-rnaturalearthdata::map_units50
+HSathEUnosea<-terra::mask(HSath,mask = nosea)
 hscol<-colorRampPalette( rev( c( viridis::inferno(4)[c(1,2,3,4,4)], "#FFFFFF" ) ) )
 plot(HSathEU,col=hscol(255),las=1, legend=T) # cropped,
 
@@ -43,15 +38,18 @@ plot(HSathEU,col=hscol(255),las=1, legend=T) # cropped,
 #points(g1001$longitude,g1001$latitude,pch=21,bg=rgb(0,0,0,0),col=rgb(0,.6,.6),cex=1,lwd=2)
 points(g1001$longitude,g1001$latitude,pch=21,bg=rgb(0,.6,.6),cex=1)
 
-# For Supp, full map
+# For Supp, full map 1300 300
 # crop ylim=c(15,70),xlim=c(-150,150)
 ath_dist<-as(extent(-150, 150, 15, 70), 'SpatialPolygons')
 crs(ath_dist) <- "+proj=longlat +datum=WGS84 +no_defs"
 HSath<-crop(HS, ath_dist)
 # visualize the map
-hscol<-colorRampPalette(rev(viridis::inferno(4)))
+hscol<-colorRampPalette( rev( c( viridis::inferno(4)[c(1,2,3,4)], "#FFFFFF" ) ) )
 #plot(HS$layer,col=hscol(255),las=1) # whole
 plot(HSath$layer,col=hscol(255),las=1, legend=F) # cropped
+#crop seas out
+HSathnosea<-terra::mask(HSath,mask = nosea)
+plot(HSathnosea,col=hscol(255),las=1)
 
 #For supp: Limiting factors
 lim<-raster("../large_files/Ath_Petal_size/habitat_suitability/Niche_modelling/Limiting_facgtors_Ath_2023-07-07.grd")
