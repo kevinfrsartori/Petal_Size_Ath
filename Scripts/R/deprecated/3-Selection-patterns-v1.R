@@ -32,14 +32,12 @@ snpeffect_nodup<-snpeffect_nodup[-which(duplicated(snpeffect_nodup[,c("rs","iHS"
 # Hist
 hist(snpeffect_nodup$snpeffect)
 
-# 1-2- FIGURES
-
-# Plot (2a)
+# Plot
 par(mar=c(3.1,3.1,1,1),oma=c(0,0,0,0))
 par(bg = "#EAE7D7")
 a<-hist(snpeffect_nodup$snpeffect,breaks = seq(-0.01,0.01,0.0005),main = "",
         ylim=c(0,6),xlim=range(-0.005,0.01),las=1,col = rgb(.85,.85,.85),
-      yaxt="n",ylab="",xlab="")
+        yaxt="n",ylab="",xlab="")
 b<-hist(snpeffect_nodup$snpeffect[which(snpeffect_nodup$snpeffect > 0)],breaks = seq(-0.01,0.01,0.0005),
         add=T,col = rgb(1,1,1))
 
@@ -52,11 +50,34 @@ axis(side = 2,at = 1:6-.5,labels = 1:6,las=1)
 
 title(main="Petal Area's derived alleles effect")
 
+# which allele is selected
+# snpeffect.s<-snpeffect_nodup[which(snpeffect_nodup$iHS_pval>1),]
+# snpeffect.s$selected<-"derived"
+# x<-which(snpeffect.s$IHH_ancestral>snpeffect.s$IHH_derived)
+# if(length(x)>0){snpeffect.s$selected[x]<-"ancestral"}
+# # discretize
+# discretize<-function(X,breaks){
+#   interval<-(breaks[2]-breaks[1])/2
+#   Y<-breaks[which(breaks > X)[1]]-interval
+# }
+# 
+# breaks<-seq(-0.01,0.01,0.0005)
+# x<-unlist(lapply(X = snpeffect.s$snpeffect,FUN = discretize,breaks=breaks))
+# 
+# y<-rep(1,length(x))
+# xy<-data.frame(x=x,y=y)
+# z<-which(duplicated(xy))
+# while (length(z)>0) {
+# xy$y[z]<-xy$y[z]+1
+# z<-which(duplicated(xy))
+# }
+# xy$type<-factor(x = snpeffect.s$selected,levels = c("derived","ancestral"))
+# points(xy$x,xy$y-.5,pch=c(24,25)[xy$type],bg=c("white","black")[xy$type],cex=2)
+# 
 hist(snpeffect_nodup$iHS[which(snpeffect_nodup$snpeffect>0)])
 hist(snpeffect_nodup$iHS[which(snpeffect_nodup$snpeffect<0)])
 
-# Plot (2b) - Other traits
-# make table 
+# 2b - Other traits
 traits<-c("Ovule_Number",colnames(read.table("Phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T))[6:16])[c(4:12,1:3)]
 respie<-data.frame(trait=traits, negative=NA, positive=NA)
 
@@ -118,7 +139,7 @@ text(y=c(.5,1.5,2.5, 3.7,4.7,5.7, 6.9,7.9,8.9, 10.1, 10.3,11.3), x=(80),srt=0,po
 text(y = c(1.5,4.7,7.9,10.8,12.3)-.6,x=c(95,95,95,95,80)+15,c("Petal","Sepal","Leaf","Stamen","Ovule Number"),pos=1)
 
 
-# 2 - PINPIS
+# 2c - PINPIS
 #------------
 
 pinpis<-read.table("../large_files/Ath_Petal_size/pinpis/pinpis_snp_2all_mac1_rel.95.txt",h=T,dec=".",na.strings = c("NaN","NA","-Inf","Inf"))
@@ -127,7 +148,7 @@ pinpis$logpinpis<-log10(pinpis$PinPis)
 pinpis$logpinpis[which(pinpis$logpinpis=="-Inf")]<-NA
 hist(pinpis$logpinpis)
 
-#  plot (2c) 500 x 400
+#  plot 500 x 400
 par(mar=c(3.1,3.1,1,1))
 d<-density(x = na.omit(pinpis$logpinpis),bw = .1)
 plot(d,ylim=c(-.2,.75),xlim=c(-4,2),
@@ -142,6 +163,7 @@ axis(side = 2,at = .3,labels = "Density",line = 0,tick = F,cex.axis=1.25)
 
 petal_list<-read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t")
 candidates<-petal_list$geneID[which(petal_list$growth_dev==1)]
+#petal_diff<-petal_list$gene_ID[which(petal_list$expr_petal_diff_expansion=="yes")]
 allgenes<-tapply(X = log10(pinpis$PinPis[which(pinpis$Gene_ID %in% petal_list$geneID)]),
                  INDEX = pinpis$Gene_ID[which(pinpis$Gene_ID %in% petal_list$geneID)],
                  FUN =  mean)
@@ -170,7 +192,7 @@ gd_genes<-allgenes[which(names(allgenes) %in% candidates)]
 1-pnorm(sort(gd_genes), mean = mean(pinpis$logpinpis,na.rm=T), sd(pinpis$logpinpis,na.rm=T) )
 
 
-# Supplemental figure : all traits distrib
+# all traits
 traits<-c("Ovule_Number",colnames(read.table("Phenotypes/U_Shaped_Data_corrected_2023-05-05.csv",h=T))[c(6:16,22)])[c(4:12,1:3,13)]
 colors<-c("white","white","white","greenyellow","greenyellow","greenyellow","green4","green4","green4","lightpink","lightblue","lightblue","black")
 
@@ -180,31 +202,30 @@ plot(d,main = "PiN/PiS density distribution",ylim=c(-1.3,.75),xlim=c(-4,2),
 polygon(d,col = rgb(0,.6,.6))
 
 for(i in 1:length(traits)){
-list<-read.table(paste0("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_",traits[i],".iHS.AD.GO.txt"),h=T,sep="\t")
-allgenes<-tapply(X = log10(pinpis$PinPis[which(pinpis$Gene_ID %in% list$geneID)]),
-                 INDEX = pinpis$Gene_ID[which(pinpis$Gene_ID %in% list$geneID)],
-                 FUN =  mean,na.rm=T)
-if(any(allgenes %in% c(Inf,-Inf))){allgenes<-allgenes[-which(allgenes %in% c(Inf,-Inf))]}
-
-if(any(is.na(allgenes))){allgenes<-allgenes[-which(is.na(allgenes))]}
-
-d2<-density(allgenes,bw=.25)
-polygon(d2$x,d2$y*.8-(.1*i),col = colors[i])
-
-Ttest<-t.test(allgenes,na.omit(pinpis$logpinpis))
-if(Ttest$p.value<0.1){ text(-4.2,-(.1*i)+0.02,paste0(traits[i]," (P < 0.1)"),pos=4) }else{ text(-4.2,-(.1*i)+0.02,traits[i],pos=4) }
+  list<-read.table(paste0("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_",traits[i],".iHS.AD.GO.txt"),h=T,sep="\t")
+  allgenes<-tapply(X = log10(pinpis$PinPis[which(pinpis$Gene_ID %in% list$geneID)]),
+                   INDEX = pinpis$Gene_ID[which(pinpis$Gene_ID %in% list$geneID)],
+                   FUN =  mean,na.rm=T)
+  if(any(allgenes %in% c(Inf,-Inf))){allgenes<-allgenes[-which(allgenes %in% c(Inf,-Inf))]}
+  
+  if(any(is.na(allgenes))){allgenes<-allgenes[-which(is.na(allgenes))]}
+  
+  d2<-density(allgenes,bw=.25)
+  polygon(d2$x,d2$y*.8-(.1*i),col = colors[i])
+  
+  Ttest<-t.test(allgenes,na.omit(pinpis$logpinpis))
+  if(Ttest$p.value<0.1){ text(-4.2,-(.1*i)+0.02,paste0(traits[i]," (P < 0.1)"),pos=4) }else{ text(-4.2,-(.1*i)+0.02,traits[i],pos=4) }
 }
 
 abline(v=mean(pinpis$logpinpis,na.rm = T),lwd=2,lty=2,col="white")
 library(statpsych)
 test.skew(allgenes)
 
-# 3- Extended Haplotype Homozygosity
+# 2d - iHS
+#---------
+# EHH plot from cluster
 
-# plot (2d) iHS of FLM SNP
-# requires large data, was made from the cluster, see bash script
-
-# Plot (2d) boxplot (SNPs effects) 275x300
+# Plot SNPs effects 275x300
 library(vcfR)
 # snp_1_28960616
 vcf<-read.vcfR("../large_files/Ath_Petal_size/gwas/flct_Hits_Petal_Area.ann.vcf")
@@ -223,9 +244,8 @@ boxplot(phenotypes$Petal_Area~phenotypes$snp_1_28960616,las=1,xlab="",
         ylab="Petal Area (mm2)",col=c(rgb(0,0,1,.5),rgb(1,0,0,.5)), )
 axis(1,at = 1:2,labels = c("Ancestral","Derived"),tick = F,line = 1)
 
-# 4- Petal ~ Seed set Relationship 
 
-# plot (2e) 780 x 550
+# 3c - Petal and fitness 780 x 550
 #---------------------------------
 
 layout(mat = matrix(data = c(1,1,1,1,2,1,1,1,1,3,1,1,1,1,4,1,1,1,1,5),nrow = 4,ncol = 5,byrow = T))
@@ -342,6 +362,28 @@ points( opt_gro,slope, pch=21,bg="#E4572E",cex=2.5,lwd=2)
 #slope<-summod$coefficients[2,1]
 #points(slope, opt_gro, pch=16,col="grey")
 
+# herbivory 2016 # NOT PUBLISHED YET
+#h2016<-read.csv2("Phenotypes/rawfiles/Manip_Arabidopsis_Herbivory_data_BRUT_060916_final_1-ligne-par-pot.csv",
+#                 h=T,dec=",",sep=";",stringsAsFactors=FALSE, fileEncoding="latin1",na.strings = ".")
+#h2016<-na.omit(h2016[,c("Bloc","Treatment","Accession_ID","NbSiliquePlante")])
+#h2016<-h2016[-which(h2016$Bloc=="A"),]
+#modh2016<-na.omit(merge(h2016,phenotypes[,c("Genotype","Petal_Area")],by.x = "Accession_ID", by.y = "Genotype",all.x = T))
+#modh2016$fitness<-log10(modh2016$NbSiliquePlante*28.3)
+#rm(h2016)
+# LME
+#mod<-nlme::lme(fitness ~ Petal_Area * Treatment + Bloc, random=~1|Accession_ID, data = modh2016)
+#summod<-summary(mod)
+#anova(mod)
+# LMER
+#mod<-lme4::lmer(fitness ~ 0 + Treatment * Petal_Area + Bloc + (1|Accession_ID), data = modh2016)
+#summod<-summary(mod)
+#summod$coefficients
+#opt_gro<-summod$coefficients[1:2,1]
+#slope<-c(summod$coefficients[3,1],summod$coefficients[3,1]+summod$coefficients[6,1])
+#sdslope<-c(summod$coefficients[3,2],summod$coefficients[6,2])
+#segments(x0 = slope-sdslope, y0 = opt_gro, x1 = slope+sdslope, y1 = opt_gro, col = "black")
+#points(slope, opt_gro, pch=16,col="green")
+
 #vasseur 2018
 V2018<-read.table("Phenotypes/rawfiles/Vasseur2018.csv",sep=",",h=T)
 V2018<-na.omit(V2018[,c("idAccession","FruitNumber")])
@@ -368,7 +410,7 @@ plot(0:1,0:1,type="l",xlim=c(0,1),ylim=c(-.5,1.5),lwd=2,xaxt="n",yaxt="n",xlab =
 plot(0:1,c(.5,.5),type="l",xlim=c(0,1),ylim=c(-.5,1.5),lwd=2,xaxt="n",yaxt="n",xlab = "",ylab="")
 plot(0:1,1:0,type="l",xlim=c(0,1),ylim=c(-.5,1.5),lwd=2,xaxt="n",yaxt="n",xlab = "",ylab="")
 
-# Biplot for SUpp figure
+# Bi plot for SUpp figure
 #------------------------
 par(mfrow=c(3,2),mar=c(4,4,1,1))
 

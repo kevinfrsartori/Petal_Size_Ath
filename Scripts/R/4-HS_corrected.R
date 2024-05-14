@@ -1,11 +1,11 @@
 #------------------
 # Petal Size Ath
 # Manuscript figures
-# Figure 4 - Climate relationship and fitness tradeoff
+# Figure 3 - Climate relationship and fitness tradeoff
 # 2024-01-02
 #------------------
 
-# Panel A - Habitat suitability map 650 x 500
+# Panel a - Habitat suitability map 650 x 500
 #----------------------------------
 par(mar=c(3,3,2,0),oma=c(0,0,0,0))
 library(raster)
@@ -99,7 +99,7 @@ glht_mod<-glht(anova, linfct=mcp(LF="Tukey"))
 letters<-cld(glht_mod)$mcletters$Letters
 text(0,c(1,2,3,4,7,8,9),letters,pos=4)
 
-# Panel B - Trait-HS relationship 500 x 500
+# Panel b - Trait-HS relationship 500 x 500
 #--------------------------------
 
 library(quantreg)
@@ -180,7 +180,7 @@ res$type<-factor(x = res$type,levels = c("negative triangular","negative","flat 
 return(res)
 }
 
-# Plot the pies
+# panel c - Plot the pies
 par(mar=c(0,0,0,0))
 # 2.1 - All data from this study
 traits<-colnames(phenotypes)[c(5:16,22,27)]
@@ -225,7 +225,7 @@ text(x = c(rep(2,7),1),y = c(1:7,8.5), pos=4, labels=c(type,"Legend"),font=c(rep
 
 dev.off()
 
-# Panel D - Large petal allele freq-HS 350 x 200
+# Panel d - Large petal allele freq-HS 350 x 200
 #-------------------------------------
 # allele 0 versus 1 recovered from glm data
 assoc<-read.table("../large_files/Ath_Petal_size/gwas/SNP_1001g_filtered_Petal_Area.assoc.txt",h=T,sep="\t",dec=".")
@@ -266,28 +266,8 @@ axis(side = 1,at = 1:10-.5,labels = rep("",10),las=2)
 axis(side = 1,at = 5,labels = "less          -          Habitat suitability          -          more",tick = F,line = 0)
 axis(side = 2,at = .125,labels = "Large Petal Allele frequency",tick = F,line = 2)
 
-  # Barplot derived large petal alleles #NOT USED
-#ancestry <- na.omit(read.table("../large_files/Ath_Petal_size/tables/annotated_simple_flct_Hits_Petal_Area.iHS.AD.GO.txt",h=T,sep="\t"))
-# Filter SNPs
-# 1-Keep one snp per gene, the one with longest haplotype
-#ancestry<-ancestry[order(ancestry$iHS_pval,decreasing = T),]
-#ancestry<-ancestry[-which(duplicated(ancestry$geneID)),]
-# 2-Keep one representative per SNP if ancestry is conserved
-#ancestry<-ancestry[-which(duplicated(ancestry[,c("snpID","iHS")])),]
 
-#snpeffect<-merge(snpeffect,ancestry[,c(1,10)],by.x="rs",by.y="snpID",all.x=T)
-#snpeffect<-snpeffect[which(snpeffect$large_petal_allele == snpeffect$DER),]
-
-#par(mar=c(1,1,1,1), oma=c(2,3,0,0))
-#large_petal_allele_frq_per_hsrange<-apply(snpeffect[,grep("HS",colnames(snpeffect))],MARGIN = 2,FUN = sum,na.rm=T)/length(na.omit(snpeffect$large_petal_allele_frq_HS01))
-#hscol<-colorRampPalette(rev(viridis::inferno(4)))
-#barplot(large_petal_allele_frq_per_hsrange,ylim=c(0.1,.25),xpd=F,las=1,col=hscol(20)[6:15],space=0,xaxt="n")
-#axis(side = 1,at = 1:10-.5,labels = rep("",10),las=2)
-#axis(side = 1,at = 5,labels = "less          -          Habitat suitability          -          more",tick = F,line = 0)
-#axis(side = 2,at = .125,labels = "Large Petal Allele frequency",tick = F,line = 2)
-
-
-# Panel D - SFS-HS 450 x 600
+# Panel e - SFS-HS 450 x 600
 #-----------------
 dev.off()
 par(mfrow=c(1,1))
