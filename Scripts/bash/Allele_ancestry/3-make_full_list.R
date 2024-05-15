@@ -6,7 +6,7 @@
 
 # AT_N0.tsv was made with grep AT from N0.tsv
 
-ortholist<-read.table(file = "$PATH-TO-SERVER/proteomes/A.tha447.hal.lyr.013024/OrthoFinder/Results_Jan30/Phylogenetic_Hierarchical_Orthogroups/AT_N0.txt",h=F,sep = "\t",na.strings = "")
+ortholist<-read.table(file = "/crex/proj/snic2020-16-182/proteomes/A.tha447.hal.lyr.013024/OrthoFinder/Results_Jan30/Phylogenetic_Hierarchical_Orthogroups/AT_N0.txt",h=F,sep = "\t",na.strings = "")
 colnames(ortholist)<-c("HOG","OG","N","Ahal","Alyr","Atha")
 
 # Keep only one gene Ahal and Alyr

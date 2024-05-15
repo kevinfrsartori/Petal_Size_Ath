@@ -67,7 +67,7 @@ done
 for trait in Ovule_Number Long_Stamens Short_Stamens Petal_Area Petal_Length Petal_Width Sepal_Area Sepal_Length Sepal_Width Leaf_Area Leaf_Length Leaf_Width flowering_time
 do
 echo $trait
-Rscript --vanilla rehh/final-table.R $trait
+Rscript --vanilla rehh/final-table_v2.R $trait
 done
 
 
