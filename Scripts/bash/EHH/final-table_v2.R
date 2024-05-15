@@ -19,15 +19,15 @@ library(vcfR)
 # 1 - load EHH scan file (concatenate chromosomes)
 for (i in 1:5) {
  if (i==1) {
-   scanehh<-read.table(paste0("/crex/proj/snic2020-16-182/A_thaliana/fastphase/scanEHH.chrm-",i,".txt"),h=T,sep=" ",dec=".")
+   scanehh<-read.table(paste0("$PATH-TO-SERVER/A_thaliana/fastphase/scanEHH.chrm-",i,".txt"),h=T,sep=" ",dec=".")
  }else{
-   scanehh<-rbind(scanehh,read.table(paste0("/crex/proj/snic2020-16-182/A_thaliana/fastphase/scanEHH.chrm-",i,".txt"),h=T,sep=" ",dec="."))
+   scanehh<-rbind(scanehh,read.table(paste0("$PATH-TO-SERVER/A_thaliana/fastphase/scanEHH.chrm-",i,".txt"),h=T,sep=" ",dec="."))
  }
 }
 scanehh$snpID<-paste0("snp_",scanehh$CHR,"_",scanehh$POSITION)
 
 # Open ancestry state file of the studied SNPs
-ADstate<-read.table(paste0("/domus/h1/kevinfrs/private/Athaliana_flowersize/ADstate_",argum[1],".csv"),sep=";",h=T)[,c(1:8)] 
+ADstate<-read.table(paste0("$PATH-TO-SERVER/private/Athaliana_flowersize/ADstate_",argum[1],".csv"),sep=";",h=T)[,c(1:8)] 
 # merge iHH from scan
 ADstate<-merge(x = ADstate,y = scanehh[,c(3,4,5,7)],by = "snpID",all.x = T,sort = F)
 # Create new column that we fill later on
@@ -40,7 +40,7 @@ ADstate$iHH_ALT<-NA
 # Report the REF and ALT frequencies from vcf files
 # make loop
 for (i in 1:dim(ADstate)[1]) {
-vcf<-read.vcfR(paste0("/crex/proj/snic2020-16-182/A_thaliana/Ushape_genomics/VCF/",ADstate$snpID[i],".vcf.gz"))
+vcf<-read.vcfR(paste0("$PATH-TO-SERVER/A_thaliana/Ushape_genomics/VCF/",ADstate$snpID[i],".vcf.gz"))
 # all alleles
 GT<-matrix(data = vcf@gt[,-1],nrow = 1, ncol = 1135,byrow = F  )
 alleles<-c(substr(x = GT,start = 1,stop = 1),substr(x = GT,start = 3,stop = 3))
@@ -61,7 +61,7 @@ if (any(ADstate$a_is =="REF")){ ADstate$iHH_ALT[which(ADstate$a_is =="REF")]<-AD
 
 # Load genome wide iHS (with standardized the statistic)
 # iHS data
-WDiHS<-read.table("/domus/h1/kevinfrs/private/Athaliana_flowersize/rehh/Genome_wide_iHS.txt",h=T)
+WDiHS<-read.table("$PATH-TO-SERVER/private/Athaliana_flowersize/rehh/Genome_wide_iHS.txt",h=T)
 str(WDiHS)
 
 # Merge
@@ -73,7 +73,7 @@ ADstate<-merge(ADstate,WDiHS[,c("snpID","FREQ_ancestral","FREQ_derived","IHH_anc
 
 library(rehh)
 # I made a custom version of rehh::ihh2ihs to compute the statistic and Pvalue for extra snps based on whole genome computation
-source("/domus/h1/kevinfrs/private/Athaliana_flowersize/rehh/whole_genome_ADstate/2-Blast_SingleCopyOrtho/ihh2ihs_ks.R")
+source("$PATH-TO-SERVER/private/Athaliana_flowersize/rehh/whole_genome_ADstate/2-Blast_SingleCopyOrtho/ihh2ihs_ks.R")
 # first make dataset with missing ancestry in the format required by rehh
 res_ihh<-WDiHS[,c("chrm","pos","FREQ_ancestral","IHH_ancestral","IHH_derived","uniHS","iHS")]
 mis_ihh<-ADstate[which(is.na(ADstate$Pvalue)),c("CHROM","POS","FREQ_REF","iHH_REF","iHH_ALT")]
@@ -125,4 +125,4 @@ ADstate$ANC[c(P3,P4,P5,P6)]<-ADstate$ALT[c(P3,P4,P5,P6)]
 ADstate<-ADstate[,c(1:6,16,9:15)]
 
 # Write
-write.csv2(x = ADstate , file = paste0("/domus/h1/kevinfrs/private/Athaliana_flowersize/ADstate_iHS_",argum[1],".csv"),quote = F,row.names = F)
+write.csv2(x = ADstate , file = paste0("$PATH-TO-SERVER/private/Athaliana_flowersize/ADstate_iHS_",argum[1],".csv"),quote = F,row.names = F)
